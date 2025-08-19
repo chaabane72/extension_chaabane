@@ -76,11 +76,29 @@ namespace actionneurs {
     }
 /////////////////////////////////////
 
+    /**
+     * Allume plusieurs LEDs selon une valeur binaire (codée en nombre décimal)
+     * @param valeur un nombre entre 0 et 63 (6 bits), eg: 42
+     */
+    //% block="💡 afficher LEDs avec la valeur %valeur"
+    //% valeur.min=0 valeur.max=63
+    //% group="LEDs"
+    export function afficherLEDs(valeur: number): void {
+        const broches: DigitalPin[] = [
+            DigitalPin.P0, DigitalPin.P1, DigitalPin.P2,
+            DigitalPin.P8, DigitalPin.P12, DigitalPin.P16
+        ]
+
+        for (let i = 0; i < broches.length; i++) {
+            const etat = (valeur >> i) & 0x1
+            pins.digitalWritePin(broches[i], etat)
+        }
+    }
 
 
 
 
-
+/////////////////////////////
 
 
 
