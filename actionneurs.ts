@@ -82,26 +82,24 @@ namespace actionneurs {
     // ---------- GROUPE : Moteurs ----------
 
     /**
-     * Positionne un servomoteur à un angle donné
-     * @param broche la broche du servomoteur
-     * @param angle l'angle entre 0 et 180 degrés
-     */
-    //% block="positionner le servomoteur sur %broche à %angle °"
+   * Fait tourner progressivement un servomoteur à un angle donné, à une certaine vitesse
+   * @param broche la broche du servomoteur
+   * @param angle l'angle cible entre 0 et 180 degrés
+   * @param vitesse le délai entre chaque degré en ms (plus petit = plus rapide), eg: 10
+   */
+    //% block="positionner le servomoteur sur %broche vers %angle ° avec une vitesse de %vitesse ms par degré"
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% angle.min=0 angle.max=180
+    //% vitesse.min=1 vitesse.max=100
     //% group="Moteurs"
-    export function positionnerServo(broche: AnalogPin, angle: number): void {
-        pins.servoWritePin(broche, angle)
+    export function positionnerServoAvecVitesse(broche: AnalogPin, angle: number, vitesse: number): void {
+        let positionActuelle = 90 // point de départ par défaut (ou à stocker ailleurs)
+        let step = angle > positionActuelle ? 1 : -1
+        for (let pos = positionActuelle; pos != angle; pos += step) {
+            pins.servoWritePin(broche, pos)
+            basic.pause(vitesse)
+        }
+        pins.servoWritePin(broche, angle) // assurer la position finale
     }
 
-    /**
-     * Arrête un servomoteur (en envoyant un signal bas)
-     * @param broche la broche du servomoteur
-     */
-    //% block="arrêter le servomoteur sur %broche"
-    //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
-    //% group="Moteurs"
-    export function arreterServo(broche: AnalogPin): void {
-        pins.digitalWritePin(broche, 0)
-    }
 }
