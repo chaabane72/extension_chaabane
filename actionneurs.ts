@@ -90,7 +90,8 @@ namespace actionneurs {
     }
 
     // ---------- GROUPE : Moteurs ----------
-
+    
+    //////////////////////////servomoteur///////////
     /**
      * Fait tourner progressivement un servomoteur à un angle donné, à une certaine vitesse
      * @param broche la broche du servomoteur
@@ -111,5 +112,64 @@ namespace actionneurs {
         }
         pins.servoWritePin(broche, angle)
     }
+///////////////////moteur pas à pas////////////////////////
+    /**
+     * Sens de rotation du moteur pas à pas
+     */
+    export enum SensRotation {
+        //% block="horaire"
+        Horaire = 1,
+        //% block="antihoraire"
+        Antihoraire = -1
+    }
+
+    /**
+     * Fait tourner un moteur pas à pas type 28BYJ-48 (ULN2003) via 4 broches
+     * @param p1, p2, p3, p4 Broches de contrôle
+     * @param pas nombre de pas à effectuer, eg: 100
+     * @param sens horaire ou antihoraire
+     */
+    //% block="🔁 moteur pas à pas sur %p1 %p2 %p3 %p4 : %pas pas en sens %sens"
+    //% group="Moteurs"
+    export function tournerMoteurPasAPas(
+        p1: DigitalPin, p2: DigitalPin, p3: DigitalPin, p4: DigitalPin,
+        pas: number, sens: SensRotation
+    ): void {
+
+        const sequence = [
+            [1, 0, 0, 0],
+            [1, 1, 0, 0],
+            [0, 1, 0, 0],
+            [0, 1, 1, 0],
+            [0, 0, 1, 0],
+            [0, 0, 1, 1],
+            [0, 0, 0, 1],
+            [1, 0, 0, 1]
+        ]
+
+        const broches = [p1, p2, p3, p4]
+        const totalSteps = sequence.length
+        const dir = sens == SensRotation.Horaire ? 1 : -1
+
+        for (let i = 0; i < pas; i++) {
+            const stepIndex = (i * dir + totalSteps) % totalSteps
+            const phase = sequence[stepIndex]
+            for (let j = 0; j < 4; j++) {
+                pins.digitalWritePin(broches[j], phase[j])
+            }
+            basic.pause(5) // Ajuste la vitesse ici (5 à 20 ms entre les pas)
+        }
+
+        // Arrêt du moteur
+        for (let j = 0; j < 4; j++) {
+            pins.digitalWritePin(broches[j], 0)
+        }
+    }
+
+//////////////////////////////////
+
+
+
+
 
 }
