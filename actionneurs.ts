@@ -43,7 +43,7 @@ namespace actionneurs {
   * @param duree durée du clignotement en secondes, eg: 5
   * @param frequence nombre de clignotements par seconde, eg: 2
   */
-    //% block="faire clignoter la LED sur %broche pendant %duree secondes à %frequence clignotement(s)/seconde"
+    //% block="💡faire clignoter la LED sur %broche pendant %duree secondes à %frequence clignotement(s)/seconde"
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% duree.min=1 duree.max=60
     //% frequence.min=1 frequence.max=10
@@ -66,7 +66,7 @@ namespace actionneurs {
      * @param broche la broche de la LED
      * @param secondes temps pendant lequel la LED reste allumée, eg: 3
      */
-    //% block="allumer la LED sur %broche pendant %secondes secondes"
+    //% block="💡allumer la LED sur %broche pendant %secondes secondes"
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% secondes.min=1 secondes.max=60
     export function allumerLEDPendant(broche: DigitalPin, secondes: number): void {
