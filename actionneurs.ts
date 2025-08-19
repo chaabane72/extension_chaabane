@@ -29,6 +29,38 @@ namespace actionneurs {
         pins.digitalWritePin(broche, 0)
     }
 
+///////////////////////////////
+
+    /**
+     * Fait clignoter une LED pendant un certain temps
+     * @param broche la broche de la LED
+     * @param duree durée du clignotement en secondes, eg: 5
+     */
+    //% block="faire clignoter la LED sur %broche pendant %duree secondes"
+    //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
+    //% duree.min=1 duree.max=60
+    export function clignoterLED(broche: DigitalPin, duree: number): void {
+        let fin = input.runningTime() + duree * 1000
+        while (input.runningTime() < fin) {
+            pins.digitalWritePin(broche, 1)
+            basic.pause(500)
+            pins.digitalWritePin(broche, 0)
+            basic.pause(500)
+        }
+    }
+///////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
     // ---------- GROUPE : Moteurs ----------
 
     /**
