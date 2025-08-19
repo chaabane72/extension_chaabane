@@ -25,7 +25,8 @@ namespace actionneurs {
      * @param broche la broche de la LED
      * @param etat l'état à appliquer (allumer/éteindre)
      */
-    //% block="LED sur %broche | %etat"
+        //% block="💡 LED sur %broche | %etat"
+
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% etat.defl=LedEtat.Allumer
     //% group="LEDs"
