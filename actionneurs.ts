@@ -22,7 +22,7 @@ namespace actionneurs {
      * Éteint une LED connectée à une broche donnée
      * @param broche la broche de la LED
      */
-    //% block="éteindres la LED sur %broche"
+    //% block="éteindre la LED sur %broche"
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% group="LEDs"
     export function eteindreLED(broche: DigitalPin): void {
