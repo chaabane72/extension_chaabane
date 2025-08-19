@@ -7,27 +7,32 @@ namespace actionneurs {
 
     // ---------- GROUPE : LEDs ----------
 
+    // ---------- Sélecteur d'état pour LED ----------
     /**
-     * Allume une LED connectée à une broche donnée
-     * @param broche la broche de la LED
+     * État de la LED
      */
-    //% block="allumer la LED sur %broche"
-    //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
-    //% group="LEDs"
-    export function allumerLED(broche: DigitalPin): void {
-        pins.digitalWritePin(broche, 1)
+    //% blockNamespace=actionneurs
+    export enum LedEtat {
+        //% block="allumer"
+        Allumer = 1,
+        //% block="éteindre"
+        Eteindre = 0
     }
 
+    // ---------- Bloc unique : régler la LED ----------
     /**
-     * Éteint une LED connectée à une broche donnée
+     * Met la LED à l'état choisi (allumer/éteindre) sur la broche indiquée
      * @param broche la broche de la LED
+     * @param etat l'état à appliquer (allumer/éteindre)
      */
-    //% block="éteindre la LED sur %broche"
+    //% block="LED sur %broche | %etat"
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
+    //% etat.defl=LedEtat.Allumer
     //% group="LEDs"
-    export function eteindreLED(broche: DigitalPin): void {
-        pins.digitalWritePin(broche, 0)
+    export function reglerLED(broche: DigitalPin, etat: LedEtat): void {
+        pins.digitalWritePin(broche, etat == LedEtat.Allumer ? 1 : 0)
     }
+
 
 ///////////////////////////////
 
