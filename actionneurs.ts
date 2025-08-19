@@ -1,38 +1,57 @@
-
 /**
-* Utilisez ce fichier pour définir des fonctions et des blocs personnalisés.
-* En savoir plus à https://makecode.microbit.org/blocks/custom
-*/
-
-enum MyEnum {
-    //% block="one"
-    One,
-    //% block="two"
-    Two
-}
-
-/**
- * Custom blocks
+ * Module pour contrôler les actionneurs : LEDs et moteurs
  */
-//% weight=100 color=#0fbc11 icon=""
-namespace custom {
+//% color=#FF8000 icon="\uf205" block="Actionneurs"
+//% groups=["LEDs", "Moteurs"]
+namespace actionneurs {
+
+    // ---------- GROUPE : LEDs ----------
+
     /**
-     * TODO: describe your function here
-     * @param n describe parameter here, eg: 5
-     * @param s describe parameter here, eg: "Hello"
-     * @param e describe parameter here
+     * Allume une LED connectée à une broche donnée
+     * @param broche la broche de la LED
      */
-    //% block
-    export function foo(n: number, s: string, e: MyEnum): void {
-        // Add code here
+    //% block="allumer la LED sur %broche"
+    //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
+    //% group="LEDs"
+    export function allumerLED(broche: DigitalPin): void {
+        pins.digitalWritePin(broche, 1)
     }
 
     /**
-     * TODO: describe your function here
-     * @param value describe value here, eg: 5
+     * Éteint une LED connectée à une broche donnée
+     * @param broche la broche de la LED
      */
-    //% block
-    export function fib(value: number): number {
-        return value <= 1 ? value : fib(value -1) + fib(value - 2);
+    //% block="éteindre la LED sur %broche"
+    //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
+    //% group="LEDs"
+    export function eteindreLED(broche: DigitalPin): void {
+        pins.digitalWritePin(broche, 0)
+    }
+
+    // ---------- GROUPE : Moteurs ----------
+
+    /**
+     * Positionne un servomoteur à un angle donné
+     * @param broche la broche du servomoteur
+     * @param angle l'angle entre 0 et 180 degrés
+     */
+    //% block="positionner le servomoteur sur %broche à %angle °"
+    //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
+    //% angle.min=0 angle.max=180
+    //% group="Moteurs"
+    export function positionnerServo(broche: AnalogPin, angle: number): void {
+        pins.servoWritePin(broche, angle)
+    }
+
+    /**
+     * Arrête un servomoteur (en envoyant un signal bas)
+     * @param broche la broche du servomoteur
+     */
+    //% block="arrêter le servomoteur sur %broche"
+    //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
+    //% group="Moteurs"
+    export function arreterServo(broche: AnalogPin): void {
+        pins.digitalWritePin(broche, 0)
     }
 }

@@ -11,7 +11,8 @@
         "README.md",
         "main.blocks",
         "main.ts",
-        "actionneurs.ts"
+        "actionneurs.ts",
+        "capteurs.ts"
     ],
     "testFiles": [
         "test.ts"
