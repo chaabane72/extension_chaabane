@@ -83,6 +83,11 @@ namespace actionneurs {
     //% block="💡 afficher LEDs avec la valeur %valeur"
     //% valeur.min=0 valeur.max=63
     //% group="LEDs"
+    //% blockHint="Ordre des broches : P0 (bit 0), P1, P2, P8, P12, P16 (bit 5)"
+
+
+
+
     export function afficherLEDs(valeur: number): void {
         const broches: DigitalPin[] = [
             DigitalPin.P0, DigitalPin.P1, DigitalPin.P2,
