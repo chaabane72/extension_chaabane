@@ -32,22 +32,27 @@ namespace actionneurs {
 ///////////////////////////////
 
     /**
-     * Fait clignoter une LED pendant un certain temps
-     * @param broche la broche de la LED
-     * @param duree durée du clignotement en secondes, eg: 5
-     */
-    //% block="faire clignoter la LED sur %broche pendant %duree secondes"
+  * Fait clignoter une LED pendant un certain temps, avec une fréquence donnée
+  * @param broche la broche de la LED
+  * @param duree durée du clignotement en secondes, eg: 5
+  * @param frequence nombre de clignotements par seconde, eg: 2
+  */
+    //% block="faire clignoter la LED sur %broche pendant %duree secondes à %frequence clignotement(s)/seconde"
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% duree.min=1 duree.max=60
-    export function clignoterLED(broche: DigitalPin, duree: number): void {
+    //% frequence.min=1 frequence.max=10
+    //% group="LEDs"
+    export function clignoterLED(broche: DigitalPin, duree: number, frequence: number): void {
+        let intervalle = 1000 / frequence / 2  // demi-période en ms
         let fin = input.runningTime() + duree * 1000
         while (input.runningTime() < fin) {
             pins.digitalWritePin(broche, 1)
-            basic.pause(500)
+            basic.pause(intervalle)
             pins.digitalWritePin(broche, 0)
-            basic.pause(500)
+            basic.pause(intervalle)
         }
     }
+
 ///////////////////////////////
 
     /**
