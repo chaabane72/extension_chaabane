@@ -116,8 +116,8 @@ namespace actionneurs {
     // ---------- GROUPE : Moteurs ----------
 
     /**
-     * Sens de rotation du moteur pas à pas
-     */
+   * Sens de rotation du moteur pas à pas
+   */
     //% blockNamespace=actionneurs
     export enum SensRotation {
         //% block="horaire"
@@ -127,29 +127,39 @@ namespace actionneurs {
     }
 
     /**
-     * Fait tourner un moteur pas à pas (ULN2003 + 28BYJ-48) via 4 broches
-     * Branchement recommandé :
-     * IN1 → P0 | IN2 → P1 | IN3 → P2 | IN4 → P8
-     * @param p1 première broche, eg: DigitalPin.P0
-     * @param p2 deuxième broche, eg: DigitalPin.P1
-     * @param p3 troisième broche, eg: DigitalPin.P2
-     * @param p4 quatrième broche, eg: DigitalPin.P8
-     * @param pas nombre de pas à effectuer, eg: 100
-     * @param sens sens de rotation (horaire ou antihoraire)
+     * Mode de rotation : soit nombre de pas, soit durée en secondes
      */
-    //% block="🔁 moteur pas à pas sur %p1 %p2 %p3 %p4 : %pas pas en sens %sens"
+    //% blockNamespace=actionneurs
+    export enum ModeRotation {
+        //% block="nombre de pas"
+        Pas = 0,
+        //% block="durée en secondes"
+        Temps = 1
+    }
+
+    /**
+     * Fait tourner un moteur pas à pas (ULN2003) en mode durée ou nombre de pas
+     * Connexions recommandées : IN1 → P0, IN2 → P1, IN3 → P2, IN4 → P8
+     * @param p1 à p4 : broches connectées à la carte ULN2003
+     * @param valeur : nombre de pas OU nombre de secondes (selon le mode)
+     * @param mode : mode de fonctionnement (pas ou durée)
+     * @param sens : sens de rotation
+     */
+    //% block="🔁 moteur pas à pas sur %p1 %p2 %p3 %p4 : %valeur en mode %mode | sens %sens"
     //% group="Moteurs"
     //% p1.defl=DigitalPin.P0
     //% p2.defl=DigitalPin.P1
     //% p3.defl=DigitalPin.P2
     //% p4.defl=DigitalPin.P8
-    //% blockHint="💡 Connexions recommandées : IN1 → P0, IN2 → P1, IN3 → P2, IN4 → P8"
-    export function tournerMoteurPasAPas(
+    //% valeur.min=1 valeur.max=100
+    //% blockHint="💡 IN1 → P0, IN2 → P1, IN3 → P2, IN4 → P8"
+    export function moteurPasAPas(
         p1: DigitalPin,
         p2: DigitalPin,
         p3: DigitalPin,
         p4: DigitalPin,
-        pas: number,
+        valeur: number,
+        mode: ModeRotation,
         sens: SensRotation
     ): void {
 
@@ -166,8 +176,17 @@ namespace actionneurs {
 
         let index = 0
         const direction = sens == SensRotation.Horaire ? 1 : -1
+        const pauseEntrePas = 5  // ms
 
-        for (let i = 0; i < pas; i++) {
+        let nombreDePas = 0
+
+        if (mode == ModeRotation.Pas) {
+            nombreDePas = valeur
+        } else {
+            nombreDePas = Math.floor((valeur * 1000) / pauseEntrePas)
+        }
+
+        for (let i = 0; i < nombreDePas; i++) {
             index = (index + direction + 8) % 8
             let phase = sequence[index]
 
@@ -176,7 +195,7 @@ namespace actionneurs {
             pins.digitalWritePin(p3, phase[2])
             pins.digitalWritePin(p4, phase[3])
 
-            basic.pause(5) // pause entre chaque pas = vitesse du moteur
+            basic.pause(pauseEntrePas)
         }
 
         // Arrêt du moteur après le mouvement
