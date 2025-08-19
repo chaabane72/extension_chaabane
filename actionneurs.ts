@@ -38,7 +38,7 @@ namespace actionneurs {
 ///////////////////////////////
 
     /**
-  * Fait clignoter une LED pendant un certain temps, avec une fréquence donnée
+  * Fait clignoters une LED pendant un certain temps, avec une fréquence donnée
   * @param broche la broche de la LED
   * @param duree durée du clignotement en secondes, eg: 5
   * @param frequence nombre de clignotements par seconde, eg: 2
