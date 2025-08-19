@@ -113,9 +113,12 @@ namespace actionneurs {
         pins.servoWritePin(broche, angle)
     }
 ///////////////////moteur pas à pas////////////////////////
+    // ---------- GROUPE : Moteurs ----------
+
     /**
      * Sens de rotation du moteur pas à pas
      */
+    //% blockNamespace=actionneurs
     export enum SensRotation {
         //% block="horaire"
         Horaire = 1,
@@ -124,16 +127,30 @@ namespace actionneurs {
     }
 
     /**
-     * Fait tourner un moteur pas à pas type 28BYJ-48 (ULN2003) via 4 broches
-     * @param p1, p2, p3, p4 Broches de contrôle
+     * Fait tourner un moteur pas à pas (ULN2003 + 28BYJ-48) via 4 broches
+     * Branchement recommandé :
+     * IN1 → P0 | IN2 → P1 | IN3 → P2 | IN4 → P8
+     * @param p1 première broche, eg: DigitalPin.P0
+     * @param p2 deuxième broche, eg: DigitalPin.P1
+     * @param p3 troisième broche, eg: DigitalPin.P2
+     * @param p4 quatrième broche, eg: DigitalPin.P8
      * @param pas nombre de pas à effectuer, eg: 100
-     * @param sens horaire ou antihoraire
+     * @param sens sens de rotation (horaire ou antihoraire)
      */
     //% block="🔁 moteur pas à pas sur %p1 %p2 %p3 %p4 : %pas pas en sens %sens"
     //% group="Moteurs"
+    //% p1.defl=DigitalPin.P0
+    //% p2.defl=DigitalPin.P1
+    //% p3.defl=DigitalPin.P2
+    //% p4.defl=DigitalPin.P8
+    //% blockHint="💡 Connexions recommandées : IN1 → P0, IN2 → P1, IN3 → P2, IN4 → P8"
     export function tournerMoteurPasAPas(
-        p1: DigitalPin, p2: DigitalPin, p3: DigitalPin, p4: DigitalPin,
-        pas: number, sens: SensRotation
+        p1: DigitalPin,
+        p2: DigitalPin,
+        p3: DigitalPin,
+        p4: DigitalPin,
+        pas: number,
+        sens: SensRotation
     ): void {
 
         const sequence = [
@@ -147,24 +164,34 @@ namespace actionneurs {
             [1, 0, 0, 1]
         ]
 
-        const broches = [p1, p2, p3, p4]
-        const totalSteps = sequence.length
-        const dir = sens == SensRotation.Horaire ? 1 : -1
+        let index = 0
+        const direction = sens == SensRotation.Horaire ? 1 : -1
 
         for (let i = 0; i < pas; i++) {
-            const stepIndex = (i * dir + totalSteps) % totalSteps
-            const phase = sequence[stepIndex]
-            for (let j = 0; j < 4; j++) {
-                pins.digitalWritePin(broches[j], phase[j])
-            }
-            basic.pause(5) // Ajuste la vitesse ici (5 à 20 ms entre les pas)
+            index = (index + direction + 8) % 8
+            let phase = sequence[index]
+
+            pins.digitalWritePin(p1, phase[0])
+            pins.digitalWritePin(p2, phase[1])
+            pins.digitalWritePin(p3, phase[2])
+            pins.digitalWritePin(p4, phase[3])
+
+            basic.pause(5) // pause entre chaque pas = vitesse du moteur
         }
 
-        // Arrêt du moteur
-        for (let j = 0; j < 4; j++) {
-            pins.digitalWritePin(broches[j], 0)
-        }
+        // Arrêt du moteur après le mouvement
+        pins.digitalWritePin(p1, 0)
+        pins.digitalWritePin(p2, 0)
+        pins.digitalWritePin(p3, 0)
+        pins.digitalWritePin(p4, 0)
     }
+
+    
+
+
+
+
+
 
 //////////////////////////////////
 
