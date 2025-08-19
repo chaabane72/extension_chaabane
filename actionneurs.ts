@@ -25,7 +25,7 @@ namespace actionneurs {
     //% block="éteindre la LED sur %broche"
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% group="LEDs"
-    export function eteindreLED(broche: DigitalPin): void {
+    export function eteindresLED(broche: DigitalPin): void {
         pins.digitalWritePin(broche, 0)
     }
 
