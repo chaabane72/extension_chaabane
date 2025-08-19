@@ -78,6 +78,7 @@ namespace actionneurs {
 
     /**
      * Allume plusieurs LEDs selon une valeur binaire (codée en nombre décimal)
+     * Ordre des broches : P0 (bit 0), P1, P2, P8, P12, P16 (bit 5)
      * @param valeur un nombre entre 0 et 63 (6 bits), eg: 42
      */
    //% block="💡 afficher LEDs avec la valeur %valeur"
