@@ -50,7 +50,20 @@ namespace actionneurs {
     }
 ///////////////////////////////
 
-
+    /**
+     * Allume une LED pendant une durée déterminée en secondes
+     * @param broche la broche de la LED
+     * @param secondes temps pendant lequel la LED reste allumée, eg: 3
+     */
+    //% block="allumer la LED sur %broche pendant %secondes secondes"
+    //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
+    //% secondes.min=1 secondes.max=60
+    export function allumerLEDPendant(broche: DigitalPin, secondes: number): void {
+        pins.digitalWritePin(broche, 1)
+        basic.pause(secondes * 1000)
+        pins.digitalWritePin(broche, 0)
+    }
+/////////////////////////////////////
 
 
 
