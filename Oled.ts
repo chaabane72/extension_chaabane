@@ -1,165 +1,336 @@
-/**
- * Module pour écran OLED 128x64 I2C (SSD1306)
- */
-//% color=#0096FF icon="\uf26c" block="OLED 128x64"
-//% groups=["Initialisation", "Affichage", "Dessins"]
-namespace oled128x64 {
+// OLED 1.3" I2C Display Driver for MakeCode
+// Based on SSD1306/SSH1106 controller
 
-    const OLED_ADDR = 0x3C
-    let fontSize = 1
-    let screen = pins.createBuffer(1024)
+namespace OLED {
+    // OLED I2C address
+    let OLED_ADDRESS = 0x3C;
+    let _screenWidth = 128;
+    let _screenHeight = 64;
+    let _fontSize = 1;
+    let _x = 0;
+    let _y = 0;
+    let _invert = false;
 
-    // --- Commande I2C ---
-    function cmd(c: number) {
-        let buf = pins.createBuffer(2)
-        buf[0] = 0x00
-        buf[1] = c
-        pins.i2cWriteBuffer(OLED_ADDR, buf)
+    // Command constants
+    const SET_CONTRAST = 0x81;
+    const SET_ENTIRE_ON = 0xA4;
+    const SET_NORM_INV = 0xA6;
+    const SET_DISP = 0xAE;
+    const SET_MEM_ADDR = 0x20;
+    const SET_COL_ADDR = 0x21;
+    const SET_PAGE_ADDR = 0x22;
+    const SET_DISP_START_LINE = 0x40;
+    const SET_SEG_REMAP = 0xA0;
+    const SET_MUX_RATIO = 0xA8;
+    const SET_COM_OUT_DIR = 0xC0;
+    const SET_DISP_OFFSET = 0xD3;
+    const SET_COM_PIN_CFG = 0xDA;
+    const SET_DISP_CLK_DIV = 0xD5;
+    const SET_PRECHARGE = 0xD9;
+    const SET_VCOM_DESEL = 0xDB;
+    const SET_CHARGE_PUMP = 0x8D;
+
+    // Buffer for the display
+    let _screenBuffer: Buffer;
+
+    /**
+     * Initialize the OLED display
+     * @param width screen width, eg: 128
+     * @param height screen height, eg: 64
+     */
+    //% block="initialize OLED width %width height %height"
+    //% weight=100
+    export function init(width: number = 128, height: number = 64): void {
+        _screenWidth = width;
+        _screenHeight = height;
+        _screenBuffer = pins.createBuffer(_screenWidth * _screenHeight / 8);
+        _screenBuffer.fill(0);
+
+        // Initialize the display
+        writeCommand(SET_DISP | 0x00); // display off
+
+        writeCommand(SET_DISP_CLK_DIV);
+        writeCommand(0x80);
+
+        writeCommand(SET_MUX_RATIO);
+        writeCommand(_screenHeight - 1);
+
+        writeCommand(SET_DISP_OFFSET);
+        writeCommand(0x00);
+
+        writeCommand(SET_DISP_START_LINE | 0x00);
+
+        writeCommand(SET_CHARGE_PUMP);
+        writeCommand(0x14);
+
+        writeCommand(SET_MEM_ADDR);
+        writeCommand(0x00); // horizontal addressing mode
+
+        writeCommand(SET_SEG_REMAP | 0x01);
+        writeCommand(SET_COM_OUT_DIR | 0x08);
+
+        writeCommand(SET_COM_PIN_CFG);
+        writeCommand(_screenHeight == 32 ? 0x02 : 0x12);
+
+        writeCommand(SET_CONTRAST);
+        writeCommand(0xCF);
+
+        writeCommand(SET_PRECHARGE);
+        writeCommand(0xF1);
+
+        writeCommand(SET_VCOM_DESEL);
+        writeCommand(0x40);
+
+        writeCommand(SET_ENTIRE_ON);
+        writeCommand(SET_NORM_INV);
+
+        writeCommand(SET_DISP | 0x01); // display on
+
+        clear();
+        update();
     }
 
-    // --- Initialisation écran SSD1306 ---
-    function initDisplay() {
-        cmd(0xAE)
-        cmd(0xA4)
-        cmd(0xD5)
-        cmd(0x80)
-        cmd(0xA8)
-        cmd(0x3F)
-        cmd(0xD3)
-        cmd(0x00)
-        cmd(0x40)
-        cmd(0x8D)
-        cmd(0x14)
-        cmd(0x20)
-        cmd(0x00)
-        cmd(0xA1)
-        cmd(0xC8)
-        cmd(0xDA)
-        cmd(0x12)
-        cmd(0x81)
-        cmd(0xCF)
-        cmd(0xD9)
-        cmd(0xF1)
-        cmd(0xDB)
-        cmd(0x40)
-        cmd(0xA6)
-        cmd(0xAF)
+    /**
+     * Clear the display buffer
+     */
+    //% block="clear display"
+    //% weight=90
+    export function clear(): void {
+        _screenBuffer.fill(0);
+        _x = 0;
+        _y = 0;
     }
 
-    // --- Mise à jour de l'affichage ---
-    function update() {
-        for (let i = 0; i < 8; i++) {
-            cmd(0xB0 + i)
-            cmd(0x00)
-            cmd(0x10)
-            let content = screen.slice(i * 128, (i + 1) * 128)
-            let line = pins.createBuffer(129)
-            line[0] = 0x40
-            for (let j = 0; j < 128; j++) {
-                line[j + 1] = content[j]
-            }
-            pins.i2cWriteBuffer(OLED_ADDR, line)
+    /**
+     * Update the display with the buffer content
+     */
+    //% block="update display"
+    //% weight=80
+    export function update(): void {
+        writeCommand(SET_COL_ADDR);
+        writeCommand(0);
+        writeCommand(_screenWidth - 1);
+        writeCommand(SET_PAGE_ADDR);
+        writeCommand(0);
+        writeCommand((_screenHeight / 8) - 1);
+
+        let data = pins.createBuffer(_screenBuffer.length + 1);
+        data[0] = 0x40; // Data mode
+        for (let i = 0; i < _screenBuffer.length; i++) {
+            data[i + 1] = _screenBuffer[i];
+        }
+        pins.i2cWriteBuffer(OLED_ADDRESS, data);
+    }
+
+    /**
+     * Draw a pixel at specified coordinates
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @param color Pixel color (0=off, 1=on)
+     */
+    //% block="draw pixel at x %x y %y color %color"
+    //% weight=70
+    export function drawPixel(x: number, y: number, color: number): void {
+        if (x < 0 || x >= _screenWidth || y < 0 || y >= _screenHeight) return;
+
+        let page = Math.floor(y / 8);
+        let bit = y % 8;
+        let index = x + page * _screenWidth;
+
+        if (color) {
+            _screenBuffer[index] |= (1 << bit);
+        } else {
+            _screenBuffer[index] &= ~(1 << bit);
         }
     }
 
-    // --- Affichage d'un pixel ---
-    function setPixel(x: number, y: number, color: number) {
-        if (x < 0 || x > 127 || y < 0 || y > 63) return
-        let page = y >> 3
-        let byteIndex = x + page * 128
-        let mask = 1 << (y % 8)
-        if (color)
-            screen[byteIndex] |= mask
-        else
-            screen[byteIndex] &= ~mask
-    }
-
-    // --- Nettoyage écran ---
-    function clearScreen() {
-        screen.fill(0)
-        update()
-    }
-
-    // --- Initialisation (SDA = P20, SCL = P19) ---
     /**
-     * 🖥️ Initialise l'écran OLED (SDA = P20, SCL = P19)
-     * @param taillePolice taille du texte (1 à 3)
+     * Draw a line between two points
+     * @param x0 Start X
+     * @param y0 Start Y
+     * @param x1 End X
+     * @param y1 End Y
+     * @param color Line color
      */
-    //% block="🖥️ initialiser OLED (SDA=P20, SCL=P19) taille %taillePolice"
-    //% taillePolice.min=1 taillePolice.max=3 taillePolice.defl=1
-    //% group="Initialisation"
-    export function initialiserOLED(taillePolice: number): void {
-        fontSize = Math.max(1, Math.min(3, taillePolice))
-        pins.i2cWriteNumber(OLED_ADDR, 0, NumberFormat.Int8LE)
-        pins.i2cWriteBuffer(OLED_ADDR, pins.createBuffer(1))
-        initDisplay()
-        clearScreen()
-    }
+    //% block="draw line from x %x0 y %y0 to x %x1 y %y1 color %color"
+    //% weight=60
+    export function drawLine(x0: number, y0: number, x1: number, y1: number, color: number): void {
+        let dx = Math.abs(x1 - x0);
+        let dy = Math.abs(y1 - y0);
+        let sx = (x0 < x1) ? 1 : -1;
+        let sy = (y0 < y1) ? 1 : -1;
+        let err = dx - dy;
 
-    // --- Texte (affichage console uniquement) ---
-    /**
-     * Affiche un texte à une position donnée (affichage console pour test)
-     * @param texte texte à afficher
-     * @param x position horizontale (0..127)
-     * @param y position verticale (0..63)
-     */
-    //% block="📝 afficher %texte à x %x y %y"
-    //% x.min=0 x.max=127 y.min=0 y.max=63
-    //% group="Affichage"
-    export function afficherTexte(texte: string, x: number, y: number): void {
-        console.log(`Texte "${texte}" à (${x}, ${y})`)
-        // Affichage réel non encore implémenté
-    }
-
-    // --- Dessin pixel ---
-    /**
-     * Dessine un pixel
-     * @param x position x
-     * @param y position y
-     */
-    //% block="🔲 pixel à x %x y %y"
-    //% x.min=0 x.max=127 y.min=0 y.max=63
-    //% inlineInputMode=inline
-    //% group="Dessins"
-    export function pixel(x: number, y: number): void {
-        setPixel(x, y, 1)
-        update()
-    }
-
-    // --- Dessin ligne ---
-    /**
-     * Dessine une ligne entre deux points
-     */
-    //% block="📏 ligne de (%x1,%y1) à (%x2,%y2)"
-    //% inlineInputMode=inline
-    //% group="Dessins"
-    export function ligne(x1: number, y1: number, x2: number, y2: number): void {
-        let dx = Math.abs(x2 - x1)
-        let dy = -Math.abs(y2 - y1)
-        let sx = x1 < x2 ? 1 : -1
-        let sy = y1 < y2 ? 1 : -1
-        let err = dx + dy
         while (true) {
-            setPixel(x1, y1, 1)
-            if (x1 == x2 && y1 == y2) break
-            let e2 = 2 * err
-            if (e2 >= dy) { err += dy; x1 += sx }
-            if (e2 <= dx) { err += dx; y1 += sy }
+            drawPixel(x0, y0, color);
+            if (x0 === x1 && y0 === y1) break;
+            let e2 = 2 * err;
+            if (e2 > -dy) {
+                err -= dy;
+                x0 += sx;
+            }
+            if (e2 < dx) {
+                err += dx;
+                y0 += sy;
+            }
         }
-        update()
     }
 
-    // --- Dessin rectangle vide ---
     /**
-     * Dessine un rectangle vide
+     * Draw a rectangle
+     * @param x X coordinate
+     * @param y Y coordinate
+     * @param width Width
+     * @param height Height
+     * @param color Color
+     * @param filled Filled rectangle
      */
-    //% block="⬛ rectangle x %x y %y largeur %largeur hauteur %hauteur"
-    //% inlineInputMode=inline
-    //% group="Dessins"
-    export function rectangle(x: number, y: number, largeur: number, hauteur: number): void {
-        ligne(x, y, x + largeur, y)
-        ligne(x, y, x, y + hauteur)
-        ligne(x + largeur, y, x + largeur, y + hauteur)
-        ligne(x, y + hauteur, x + largeur, y + hauteur)
+    //% block="draw rectangle x %x y %y width %width height %height color %color filled %filled"
+    //% weight=50
+    export function drawRectangle(x: number, y: number, width: number, height: number, color: number, filled: boolean = false): void {
+        if (filled) {
+            for (let i = x; i < x + width; i++) {
+                for (let j = y; j < y + height; j++) {
+                    drawPixel(i, j, color);
+                }
+            }
+        } else {
+            drawLine(x, y, x + width - 1, y, color);
+            drawLine(x, y + height - 1, x + width - 1, y + height - 1, color);
+            drawLine(x, y, x, y + height - 1, color);
+            drawLine(x + width - 1, y, x + width - 1, y + height - 1, color);
+        }
+    }
+
+    /**
+     * Draw a circle
+     * @param x Center X
+     * @param y Center Y
+     * @param radius Radius
+     * @param color Color
+     * @param filled Filled circle
+     */
+    //% block="draw circle x %x y %y radius %radius color %color filled %filled"
+    //% weight=40
+    export function drawCircle(x: number, y: number, radius: number, color: number, filled: boolean = false): void {
+        let f = 1 - radius;
+        let ddF_x = 1;
+        let ddF_y = -2 * radius;
+        let x0 = 0;
+        let y0 = radius;
+
+        drawPixel(x, y + radius, color);
+        drawPixel(x, y - radius, color);
+        drawPixel(x + radius, y, color);
+        drawPixel(x - radius, y, color);
+
+        if (filled) {
+            drawLine(x - radius, y, x + radius, y, color);
+        }
+
+        while (x0 < y0) {
+            if (f >= 0) {
+                y0--;
+                ddF_y += 2;
+                f += ddF_y;
+            }
+            x0++;
+            ddF_x += 2;
+            f += ddF_x;
+
+            if (filled) {
+                drawLine(x - x0, y + y0, x + x0, y + y0, color);
+                drawLine(x - x0, y - y0, x + x0, y - y0, color);
+                drawLine(x - y0, y + x0, x + y0, y + x0, color);
+                drawLine(x - y0, y - x0, x + y0, y - x0, color);
+            } else {
+                drawPixel(x + x0, y + y0, color);
+                drawPixel(x - x0, y + y0, color);
+                drawPixel(x + x0, y - y0, color);
+                drawPixel(x - x0, y - y0, color);
+                drawPixel(x + y0, y + x0, color);
+                drawPixel(x - y0, y + x0, color);
+                drawPixel(x + y0, y - x0, color);
+                drawPixel(x - y0, y - x0, color);
+            }
+        }
+    }
+
+    /**
+     * Display text at current position
+     * @param text Text to display
+     */
+    //% block="show text %text"
+    //% weight=30
+    export function showString(text: string): void {
+        for (let i = 0; i < text.length; i++) {
+            drawChar(text.charAt(i));
+        }
+    }
+
+    /**
+     * Set cursor position
+     * @param x X position
+     * @param y Y position (0-7 for 8 rows of text)
+     */
+    //% block="set cursor x %x y %y"
+    //% weight=20
+    export function setCursor(x: number, y: number): void {
+        _x = x;
+        _y = y * 8; // Convert text row to pixel row
+    }
+
+    /**
+     * Invert display colors
+     * @param invert true to invert, false for normal
+     */
+    //% block="invert display %invert"
+    //% weight=10
+    export function invertDisplay(invert: boolean): void {
+        _invert = invert;
+        writeCommand(SET_NORM_INV | (invert ? 1 : 0));
+    }
+
+    function drawChar(char: string): void {
+        // Simple 5x8 font implementation
+        // This is a basic implementation - you might want to use a proper font
+        const font: number[] = [
+            // Basic ASCII characters (simplified)
+            0x00, 0x00, 0x00, 0x00, 0x00, // space
+            // Add more characters as needed
+        ];
+
+        let charCode = char.charCodeAt(0);
+        if (charCode < 32 || charCode > 126) charCode = 32; // Default to space
+
+        for (let i = 0; i < 5; i++) {
+            let line = 0xFF; // Default pattern (simplified)
+            for (let j = 0; j < 8; j++) {
+                if (line & (1 << j)) {
+                    drawPixel(_x + i, _y + j, 1);
+                } else {
+                    drawPixel(_x + i, _y + j, 0);
+                }
+            }
+        }
+        _x += 6;
+        if (_x > _screenWidth - 6) {
+            _x = 0;
+            _y += 8;
+        }
+    }
+
+    function writeCommand(cmd: number): void {
+        let buffer = pins.createBuffer(2);
+        buffer[0] = 0x80; // Command mode
+        buffer[1] = cmd;
+        pins.i2cWriteBuffer(OLED_ADDRESS, buffer);
+    }
+
+    function writeData(data: number): void {
+        let buffer = pins.createBuffer(2);
+        buffer[0] = 0x40; // Data mode
+        buffer[1] = data;
+        pins.i2cWriteBuffer(OLED_ADDRESS, buffer);
     }
 }
