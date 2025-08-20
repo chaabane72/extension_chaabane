@@ -5,7 +5,7 @@
 //% groups=["LEDs", "Servos", "Pas à pas", "Avancé"]
 namespace actionneurs {
 
-    // ---------- GROUPE : LEDs ----------
+    // ---------- LEDS ----------
 
     /**
      * État de la LED
@@ -20,10 +20,9 @@ namespace actionneurs {
 
     /**
      * 🔴 Met la LED à l'état choisi (allumer/éteindre) sur la broche indiquée
-     * @param broche la broche de la LED
-     * @param etat l'état à appliquer (allumer/éteindre)
      */
-    //% block="🔴 LED sur %broche | %etat"
+    //% block="🔴 LED sur %broche %etat"
+    //% inlineInputMode=inline
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% etat.defl=LedEtat.Allumer
     //% group="LEDs"
@@ -33,26 +32,22 @@ namespace actionneurs {
 
     /**
      * 🔴 Réglage de luminosité (PWM) 0–100 %
-     * @param broche la broche de la LED (broche PWM)
-     * @param pourcentage 0 à 100 %, eg: 50
      */
     //% block="🔴 luminosité LED sur %broche à %pourcentage %%"
+    //% inlineInputMode=inline
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% pourcentage.min=0 pourcentage.max=100
     //% group="LEDs"
     export function reglerLuminositeLED(broche: AnalogPin, pourcentage: number): void {
         const pct = Math.max(0, Math.min(100, Math.round(pourcentage)))
-        const value = Math.idiv(pct * 1023, 100) // 0..1023
-        pins.analogWritePin(broche, value)
+        pins.analogWritePin(broche, Math.idiv(pct * 1023, 100))
     }
 
     /**
      * 🔴 Fait clignoter une LED pendant un certain temps, avec une fréquence donnée
-     * @param broche la broche de la LED
-     * @param duree durée du clignotement en secondes, eg: 5
-     * @param frequence nombre de clignotements par seconde, eg: 2
      */
     //% block="🔴 clignoter LED sur %broche pendant %duree s à %frequence fois/s"
+    //% inlineInputMode=inline
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% duree.min=1 duree.max=60
     //% frequence.min=1 frequence.max=10
@@ -68,27 +63,17 @@ namespace actionneurs {
         }
     }
 
-
- /**
- /**
- * 🔴 Faire un fondu progressif sur une LED
- * @param broche la broche PWM
- * @param dePct valeur de départ en %, eg: 0
- * @param versPct valeur d'arrivée en %, eg: 100
- * @param dureeMs durée en millisecondes, eg: 1000
- */
+    /**
+     * 🔴 Fondu progressif sur une LED (de … à … en ms)
+     */
     //% block="🔴 fondu LED sur %broche de %dePct %% à %versPct %% en %dureeMs ms"
+    //% inlineInputMode=inline
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% dePct.min=0 dePct.max=100
     //% versPct.min=0 versPct.max=100
     //% dureeMs.min=10 dureeMs.max=10000
-    //% group="Effets"
-    export function fonduLED(
-        broche: AnalogPin,
-        dePct: number,
-        versPct: number,
-        dureeMs: number
-    ): void {
+    //% group="LEDs"
+    export function fonduLED(broche: AnalogPin, dePct: number, versPct: number, dureeMs: number): void {
         const a = Math.max(0, Math.min(100, Math.round(dePct)))
         const b = Math.max(0, Math.min(100, Math.round(versPct)))
         const pas = a <= b ? 1 : -1
@@ -101,14 +86,43 @@ namespace actionneurs {
         pins.analogWritePin(broche, Math.idiv(b * 1023, 100))
     }
 
-
+    // --- stockage interne des 6 pins (par défaut)
+    let _pinsLED6: DigitalPin[] = [
+        DigitalPin.P0, DigitalPin.P1, DigitalPin.P2,
+        DigitalPin.P8, DigitalPin.P12, DigitalPin.P16
+    ]
 
     /**
-     * 🔴 Allume une LED pendant une durée déterminée en secondes
-     * @param broche la broche de la LED
-     * @param secondes temps pendant lequel la LED reste allumée, eg: 3
+     * 🔧 Définir les 6 pins utilisées pour l'affichage binaire
+     */
+    //% block="🔧 config LEDs sur %p0 %p1 %p2 %p8 %p12 %p16"
+    //% inlineInputMode=inline
+    //% group="LEDs"
+    export function configPinsLED6(
+        p0: DigitalPin, p1: DigitalPin, p2: DigitalPin,
+        p8: DigitalPin, p12: DigitalPin, p16: DigitalPin
+    ): void {
+        _pinsLED6 = [p0, p1, p2, p8, p12, p16]
+    }
+
+    /**
+     * 🔴 Afficher une valeur binaire (0..63) sur les 6 LEDs configurées
+     */
+    //% block="🔴 LEDs %valeur (0–63)"
+    //% inlineInputMode=inline
+    //% valeur.min=0 valeur.max=63
+    //% group="LEDs"
+    export function ledsValeur(valeur: number): void {
+        for (let i = 0; i < 6; i++) {
+            pins.digitalWritePin(_pinsLED6[i], (valeur >> i) & 1)
+        }
+    }
+
+    /**
+     * 🔴 Allumer une LED pendant une durée déterminée (secondes)
      */
     //% block="🔴 allumer LED sur %broche pendant %secondes s"
+    //% inlineInputMode=inline
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% secondes.min=1 secondes.max=60
     //% group="LEDs"
@@ -118,48 +132,20 @@ namespace actionneurs {
         pins.digitalWritePin(broche, 0)
     }
 
-    /**
-     * 🔴 Affiche une valeur binaire (0..63) sur 6 LEDs (pins personnalisables)
-     * @param valeur un nombre entre 0 et 63 (6 bits), eg: 42
-     */
-    //% block="🔴 afficher LEDs %valeur sur %p0 %p1 %p2 %p8 %p12 %p16"
-
-    //% valeur.min=0 valeur.max=63
-    //% p0.defl=DigitalPin.P0 p1.defl=DigitalPin.P1 p2.defl=DigitalPin.P2
-    //% p8.defl=DigitalPin.P8 p12.defl=DigitalPin.P12 p16.defl=DigitalPin.P16
-    //% group="LEDs"
-    export function afficherLEDsSurPins(
-        valeur: number,
-        p0: DigitalPin, p1: DigitalPin, p2: DigitalPin,
-        p8: DigitalPin, p12: DigitalPin, p16: DigitalPin
-    ): void {
-        const broches: DigitalPin[] = [p0, p1, p2, p8, p12, p16]
-        for (let i = 0; i < broches.length; i++) {
-            const etat = (valeur >> i) & 0x1
-            pins.digitalWritePin(broches[i], etat)
-        }
-    }
-
-    // ---------- GROUPE : Servos ----------
+    // ---------- SERVOS ----------
 
     // mémoire simple de la dernière position par broche
     const _servoMemo: { [k: string]: number } = {}
-//////////////////////////////////
 
     /**
-        * 🧭 Positionne progressivement un servomoteur avec limites et vitesse
-        * @param broche la broche du servomoteur
-        * @param angle angle cible 0..180°
-        * @param vitesse délai entre degrés (ms), eg: 10
-        * @param minAngle butée mini, eg: 0
-        * @param maxAngle butée maxi, eg: 180
-        */
-    //% block="🧭 servo %broche vers %angle ° | vitesse %vitesse ms/° | bornes %minAngle–%maxAngle °"
-    //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
-    //% angle.min=0 angle.max=180
-    //% vitesse.min=1 vitesse.max=100
-    //% minAngle.min=0 minAngle.max=180 maxAngle.min=0 maxAngle.max=180
-    //% group="Servos"
+     * 🧭 Positionner un servomoteur avec limites et vitesse
+     */
+    //% block="🧭 servo %broche vers %angle ° | vitesse %vitesse ms/° | bornes %minAngle–%maxAngle °"
+    //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
+    //% angle.min=0 angle.max=180
+    //% vitesse.min=1 vitesse.max=100
+    //% minAngle.min=0 minAngle.max=180 maxAngle.min=0 maxAngle.max=180
+    //% group="Servos"
     export function positionnerServoAvecVitesse(
         broche: AnalogPin,
         angle: number,
@@ -167,29 +153,25 @@ namespace actionneurs {
         minAngle: number = 0,
         maxAngle: number = 180
     ): void {
-
         const key = "" + broche
         const minA = Math.min(minAngle, maxAngle)
         const maxA = Math.max(minAngle, maxAngle)
         const cible = Math.max(minA, Math.min(maxA, Math.round(angle)))
 
         let positionActuelle = 90
+        // Test de présence compatible MakeCode (prend aussi la valeur 0)
         if (_servoMemo[key] || _servoMemo[key] == 0) {
             positionActuelle = _servoMemo[key]
         }
 
         const step = cible > positionActuelle ? 1 : -1
-
         for (let pos = positionActuelle; pos != cible; pos += step) {
             pins.servoWritePin(broche, pos)
             basic.pause(vitesse)
         }
         pins.servoWritePin(broche, cible)
         _servoMemo[key] = cible
-
     }
-
-
 
     /**
      * 🧭 Arrêter (détacher) le servomoteur
@@ -199,10 +181,12 @@ namespace actionneurs {
     //% group="Servos"
     export function arreterServo(broche: AnalogPin): void {
         pins.digitalWritePin(broche, 0) // stoppe l'envoi de pulses
-        _servoMemo["" + broche] = _servoMemo["" + broche] || 90
+        if (!(_servoMemo["" + broche] || _servoMemo["" + broche] == 0)) {
+            _servoMemo["" + broche] = 90
+        }
     }
 
-    // ---------- GROUPE : Pas à pas ----------
+    // ---------- PAS À PAS ----------
 
     /**
      * Sens de rotation du moteur pas à pas
@@ -238,12 +222,11 @@ namespace actionneurs {
     }
 
     /**
-     * 🔁 Moteur pas à pas (ULN2003) en durée ou nombre de pas, vitesse et mode
+     * 🔁 Moteur pas à pas (ULN2003) : durée ou nombre de pas, vitesse et mode
      * Connexions recommandées : IN1 → P0, IN2 → P1, IN3 → P2, IN4 → P8
-     * @param valeur nombre de pas OU secondes (selon le mode)
-     * @param vitesseMs délai entre pas (ms), eg: 5
      */
     //% block="🔁 pas à pas sur %p1 %p2 %p3 %p4 : %valeur en %mode | sens %sens | %vitesseMs ms/pas | mode %modePas"
+    //% inlineInputMode=inline
     //% group="Pas à pas"
     //% p1.defl=DigitalPin.P0 p2.defl=DigitalPin.P1 p3.defl=DigitalPin.P2 p4.defl=DigitalPin.P8
     //% valeur.min=1 valeur.max=2000
@@ -260,7 +243,6 @@ namespace actionneurs {
         vitesseMs: number = 5,
         modePas: ModePas = ModePas.Demi
     ): void {
-
         const sequenceDemi = [
             [1, 0, 0, 0],
             [1, 1, 0, 0],
@@ -271,7 +253,6 @@ namespace actionneurs {
             [0, 0, 0, 1],
             [1, 0, 0, 1]
         ]
-
         const sequenceEntier = [
             [1, 1, 0, 0],
             [0, 1, 1, 0],
@@ -282,9 +263,8 @@ namespace actionneurs {
         const seq = modePas == ModePas.Demi ? sequenceDemi : sequenceEntier
         const nStepsSeq = seq.length
 
-        let nombreDePas = 0
         const delay = Math.max(1, Math.round(vitesseMs))
-
+        let nombreDePas = 0
         if (mode == ModeRotation.Pas) {
             nombreDePas = valeur
         } else {
@@ -297,12 +277,10 @@ namespace actionneurs {
         for (let i = 0; i < nombreDePas; i++) {
             index = (index + direction + nStepsSeq) % nStepsSeq
             const phase = seq[index]
-
             pins.digitalWritePin(p1, phase[0])
             pins.digitalWritePin(p2, phase[1])
             pins.digitalWritePin(p3, phase[2])
             pins.digitalWritePin(p4, phase[3])
-
             basic.pause(delay)
         }
 
@@ -317,6 +295,7 @@ namespace actionneurs {
      * 🔁 Arrêter le moteur pas à pas (toutes les bobines à 0)
      */
     //% block="🔁 arrêter pas à pas sur %p1 %p2 %p3 %p4"
+    //% inlineInputMode=inline
     //% group="Pas à pas"
     export function arreterPasAPas(
         p1: DigitalPin, p2: DigitalPin, p3: DigitalPin, p4: DigitalPin
@@ -327,12 +306,13 @@ namespace actionneurs {
         pins.digitalWritePin(p4, 0)
     }
 
-    // ---------- GROUPE : Avancé ----------
+    // ---------- AVANCÉ ----------
 
     /**
-     * Retourne le nombre d'impulsions PWM (0..1023) pour un pourcentage donné
+     * Convertir un pourcentage en PWM (0..1023)
      */
     //% block="🔧 convertir %pourcentage %% en PWM (0..1023)"
+    //% inlineInputMode=inline
     //% pourcentage.min=0 pourcentage.max=100
     //% group="Avancé"
     export function pourcentageVersPWM(pourcentage: number): number {
