@@ -37,7 +37,7 @@ namespace actionneurs {
      * @param duree durée du clignotement en secondes, eg: 5
      * @param frequence nombre de clignotements par seconde, eg: 2
      */
-    //% block="💡 faire clignoter la LED sur %broche pendant %duree s à %frequence fois(s)/s"
+    //% block="💡 faire clignoter la LED sur %broche pendant %duree s à %frequence fois/s"
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% duree.min=1 duree.max=60
     //% frequence.min=1 frequence.max=10
