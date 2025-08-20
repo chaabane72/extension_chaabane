@@ -19,21 +19,7 @@ namespace capteurs {
         KY018 = 3
     }
 
-    // ---------- outils internes ----------
-    function clamp(n: number, min: number, max: number): number {
-        return Math.max(min, Math.min(max, n))
-    }
-
-    function mapToPercent(adc: number, noir: number, clair: number): number {
-        const a = Math.min(noir, clair)
-        const b = Math.max(noir, clair)
-        if (b - a <= 0) return 0
-        // pourcentage 0..100 (arrondi)
-        const pct = Math.round((adc - a) * 100 / (b - a))
-        return clamp(pct, 0, 100)
-    }
-
-    // Calibrages internes (0..1023) — pas visibles par les élèves
+    // --- calibrages internes (0..1023) — rien à régler pour les élèves
     function noirClair(ref: RefLumiere): number[] {
         switch (ref) {
             case RefLumiere.LDR_100k: return [50, 1000]
@@ -43,19 +29,26 @@ namespace capteurs {
         }
     }
 
+    function clamp(n: number, min: number, max: number) { return Math.max(min, Math.min(max, n)) }
+
+    function mapToPercent(adc: number, a: number, b: number): number {
+        const low = Math.min(a, b), high = Math.max(a, b)
+        if (high - low <= 0) return 0
+        return clamp(Math.round((adc - low) * 100 / (high - low)), 0, 100)
+    }
+
     /**
      * 💡 Lire la lumière en % (0–100) — choisir la broche et la référence du capteur
-     * (le calibrage est géré automatiquement en interne)
+     * (calibré automatiquement en interne)
      */
-    //% block="💡 lumière en %% sur %broche | capteur %ref"
+    //% block="💡 lumière en %% sur %pin capteur %ref"
     //% inlineInputMode=inline
-    //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=3
-    //% broche.defl=AnalogPin.P1
+    //% pin.defl=AnalogPin.P1
     //% ref.defl=RefLumiere.LDR_10k_GL5528
     //% group="Lumière"
-    export function luminositePourcent(broche: AnalogPin, ref: RefLumiere): number {
-        const adc = pins.analogReadPin(broche)  // 0..1023
-        const nc = noirClair(ref)               // [noir, clair] selon la référence
-        return mapToPercent(adc, nc[0], nc[1])  // renvoie 0..100
+    export function luminositePourcent(pin: AnalogPin, ref: RefLumiere): number {
+        const adc = pins.analogReadPin(pin)     // 0..1023
+        const [noir, clair] = noirClair(ref)    // seuils selon la référence
+        return mapToPercent(adc, noir, clair)   // 0..100
     }
 }
