@@ -11,37 +11,37 @@ namespace oled128x64 {
     // --- FONCTIONS INTERNES ---
     function sendCommand(cmd: number) {
         let buf = pins.createBuffer(2)
-        buf[0] = 0x00 // commande
+        buf[0] = 0x00
         buf[1] = cmd
         pins.i2cWriteBuffer(OLED_ADDR, buf)
     }
 
     function initDisplay() {
-        sendCommand(0xAE) // display off
-        sendCommand(0xA4) // display RAM content
-        sendCommand(0xD5) // clock divide ratio
+        sendCommand(0xAE)
+        sendCommand(0xA4)
+        sendCommand(0xD5)
         sendCommand(0x80)
-        sendCommand(0xA8) // multiplex ratio
+        sendCommand(0xA8)
         sendCommand(0x3F)
-        sendCommand(0xD3) // display offset
+        sendCommand(0xD3)
         sendCommand(0x00)
-        sendCommand(0x40) // start line
-        sendCommand(0x8D) // charge pump
-        sendCommand(0x14)
-        sendCommand(0x20) // memory mode
-        sendCommand(0x00)
-        sendCommand(0xA1) // segment remap
-        sendCommand(0xC8) // com scan direction
-        sendCommand(0xDA) // com pins
-        sendCommand(0x12)
-        sendCommand(0x81) // contrast
-        sendCommand(0xCF)
-        sendCommand(0xD9) // pre-charge
-        sendCommand(0xF1)
-        sendCommand(0xDB) // vcomh deselect
         sendCommand(0x40)
-        sendCommand(0xA6) // normal display
-        sendCommand(0xAF) // display on
+        sendCommand(0x8D)
+        sendCommand(0x14)
+        sendCommand(0x20)
+        sendCommand(0x00)
+        sendCommand(0xA1)
+        sendCommand(0xC8)
+        sendCommand(0xDA)
+        sendCommand(0x12)
+        sendCommand(0x81)
+        sendCommand(0xCF)
+        sendCommand(0xD9)
+        sendCommand(0xF1)
+        sendCommand(0xDB)
+        sendCommand(0x40)
+        sendCommand(0xA6)
+        sendCommand(0xAF)
     }
 
     function clear() {
@@ -58,7 +58,7 @@ namespace oled128x64 {
         }
     }
 
-    // --- INITIALISATION FIXÉE SUR P20 et P19 ---
+    // --- INITIALISATION ---
 
     /**
      * Initialise l'écran OLED connecté à P20 (SDA) et P19 (SCL)
