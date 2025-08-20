@@ -122,7 +122,7 @@ namespace actionneurs {
      * 🔴 Affiche une valeur binaire (0..63) sur 6 LEDs (pins personnalisables)
      * @param valeur un nombre entre 0 et 63 (6 bits), eg: 42
      */
-    //% block="🔴 afficher LEDs %valeur | | | | |sur %p0 %p1 %p2 %p8 %p12 %p16"
+    //% block="🔴 afficher LEDs %valeur sur %p0 %p1 %p2 %p8 %p12 %p16"
 
     //% valeur.min=0 valeur.max=63
     //% p0.defl=DigitalPin.P0 p1.defl=DigitalPin.P1 p2.defl=DigitalPin.P2
