@@ -144,14 +144,50 @@ namespace actionneurs {
     // mémoire simple de la dernière position par broche
     const _servoMemo: { [k: string]: number } = {}
 //////////////////////////////////
-    //% block="🔴 afficher LEDs %valeur (pins fixes)"
-    export function afficherLEDs(valeur: number): void {
-        const broches: DigitalPin[] = [DigitalPin.P0, DigitalPin.P1, DigitalPin.P2, DigitalPin.P8, DigitalPin.P12, DigitalPin.P16]
-        for (let i = 0; i < broches.length; i++) {
-            const etat = (valeur >> i) & 0x1
-            pins.digitalWritePin(broches[i], etat)
+
+    /**
+        * 🧭 Positionne progressivement un servomoteur avec limites et vitesse
+        * @param broche la broche du servomoteur
+        * @param angle angle cible 0..180°
+        * @param vitesse délai entre degrés (ms), eg: 10
+        * @param minAngle butée mini, eg: 0
+        * @param maxAngle butée maxi, eg: 180
+        */
+    //% block="🧭 servo %broche vers %angle ° | vitesse %vitesse ms/° | bornes %minAngle–%maxAngle °"
+    //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
+    //% angle.min=0 angle.max=180
+    //% vitesse.min=1 vitesse.max=100
+    //% minAngle.min=0 minAngle.max=180 maxAngle.min=0 maxAngle.max=180
+    //% group="Servos"
+    export function positionnerServoAvecVitesse(
+        broche: AnalogPin,
+        angle: number,
+        vitesse: number,
+        minAngle: number = 0,
+        maxAngle: number = 180
+    ): void {
+
+        const key = "" + broche
+        const minA = Math.min(minAngle, maxAngle)
+        const maxA = Math.max(minAngle, maxAngle)
+        const cible = Math.max(minA, Math.min(maxA, Math.round(angle)))
+
+        let positionActuelle = 90
+        if (_servoMemo[key] || _servoMemo[key] == 0) {
+            positionActuelle = _servoMemo[key]
         }
+
+        const step = cible > positionActuelle ? 1 : -1
+
+        for (let pos = positionActuelle; pos != cible; pos += step) {
+            pins.servoWritePin(broche, pos)
+            basic.pause(vitesse)
+        }
+        pins.servoWritePin(broche, cible)
+        _servoMemo[key] = cible
+
     }
+
 
 
     /**
