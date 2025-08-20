@@ -309,16 +309,20 @@ namespace actionneurs {
     // ---------- AVANCÉ ----------
 
     /**
-     * Convertir un pourcentage en PWM (0..1023)
-     */
-    //% block="🔧 convertir %pourcentage %% en PWM (0..1023)"
+ * 🔧 Convertir un pourcentage de luminosité (0–100 %) en PWM (0–1023).
+ * Utile pour commander l'intensité d'une LED.
+ * Exemple : 50 % → 511
+ */
+    //% block="🔧 convertir %pourcentage| %% (entre 0 et 100) en PWM (0–1023)"
     //% inlineInputMode=inline
     //% pourcentage.min=0 pourcentage.max=100
+    //% pourcentage.defl=50
     //% group="Avancé"
     export function pourcentageVersPWM(pourcentage: number): number {
         const pct = Math.max(0, Math.min(100, Math.round(pourcentage)))
         return Math.idiv(pct * 1023, 100)
     }
+
      // ---------- AVANCÉ1 ----------
 
 }
