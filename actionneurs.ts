@@ -69,9 +69,6 @@ namespace actionneurs {
     //% block="🔴 fondu LED sur %broche de %dePct %% à %versPct %% en %dureeMs ms"
     //% inlineInputMode=inline
 
-
-
-
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% dePct.min=0 dePct.max=100 dePct.defl=0
     //% versPct.min=0 versPct.max=100 versPct.defl=100
@@ -150,6 +147,7 @@ namespace actionneurs {
      * 🧭 Positionner un servomoteur avec limites et vitesse
      */
     //% block="🧭 servo %broche vers %angle ° | vitesse %vitesse ms/° | bornes %minAngle–%maxAngle °"
+   //% inlineInputMode=inline
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% angle.min=0 angle.max=180
     //% vitesse.min=1 vitesse.max=100
