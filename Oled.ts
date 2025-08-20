@@ -109,6 +109,9 @@ namespace oled128x64 {
      */
     //% block="🔲 pixel à x %x y %y"
     //% x.min=0 x.max=127 y.min=0 y.max=63
+
+    //% inlineInputMode=inline
+
     //% group="Dessins"
     export function pixel(x: number, y: number): void {
         // Ceci est un exemple simple — implémentation complète possible avec buffer
