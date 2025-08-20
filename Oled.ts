@@ -7,11 +7,8 @@ namespace oled128x64 {
 
     const OLED_ADDR = 0x3C
     let fontSize = 1
-    let oled_sda: DigitalPin
-    let oled_scl: DigitalPin
 
     // --- FONCTIONS INTERNES ---
-
     function sendCommand(cmd: number) {
         let buf = pins.createBuffer(2)
         buf[0] = 0x00 // commande
@@ -61,31 +58,19 @@ namespace oled128x64 {
         }
     }
 
-    // --- INITIALISATION ---
+    // --- INITIALISATION FIXÉE SUR P20 et P19 ---
 
     /**
-     * Initialiser l'écran OLED (SSD1306) sur le bus I2C
-     * ⚠️ Connexion obligatoire : SDA → P20, SCL → P19
-     * @param sda broche SDA (fixée à P20)
-     * @param scl broche SCL (fixée à P19)
-     * @param taillePolice 1 (petit), 2 (moyen), 3 (grand)
+     * Initialise l'écran OLED connecté à P20 (SDA) et P19 (SCL)
+     * @param taillePolice 1 (petite), 2 (moyenne), 3 (grande)
      */
-    //% block="🖥️ initialiser OLED SDA %sda SCL %scl taille %taillePolice"
-    //% sda.defl=DigitalPin.P20 scl.defl=DigitalPin.P19
-    //% sda.fieldEditor="gridpicker" sda.fieldOptions.columns=1
-    //% sda.fieldOptions.decompileLiterals=true
-    //% sda.fieldOptions.options="DigitalPin.P20"
-    //% scl.fieldEditor="gridpicker" scl.fieldOptions.columns=1
-    //% scl.fieldOptions.decompileLiterals=true
-    //% scl.fieldOptions.options="DigitalPin.P19"
+    //% block="🖥️ initialiser OLED (SDA=P20, SCL=P19) taille %taillePolice"
     //% taillePolice.min=1 taillePolice.max=3 taillePolice.defl=1
     //% group="Initialisation"
-    export function initialiserOLED(sda: DigitalPin, scl: DigitalPin, taillePolice: number): void {
-        oled_sda = sda
-        oled_scl = scl
+    export function initialiserOLED(taillePolice: number): void {
         fontSize = Math.max(1, Math.min(3, taillePolice))
-        pins.i2cWriteNumber(OLED_ADDR, 0, NumberFormat.Int8LE) // réveille l'écran
-        pins.i2cWriteBuffer(OLED_ADDR, pins.createBuffer(1))   // force init
+        pins.i2cWriteNumber(OLED_ADDR, 0, NumberFormat.Int8LE)
+        pins.i2cWriteBuffer(OLED_ADDR, pins.createBuffer(1))
         initDisplay()
         clear()
     }
@@ -93,8 +78,8 @@ namespace oled128x64 {
     // --- AFFICHAGE TEXTE ---
 
     /**
-     * Affiche du texte sur l'écran OLED à une position donnée
-     * @param texte texte à afficher
+     * Affiche un texte à la position indiquée (affichage console pour test)
+     * @param texte le texte à afficher
      * @param x position horizontale (0..127)
      * @param y position verticale (0..63)
      */
@@ -109,12 +94,10 @@ namespace oled128x64 {
 
     /**
      * Dessine un pixel à une position donnée
-     * @param x position horizontale (0..127)
-     * @param y position verticale (0..63)
      */
     //% block="🔲 pixel à x %x y %y"
-    //% inlineInputMode=inline
     //% x.min=0 x.max=127 y.min=0 y.max=63
+    //% inlineInputMode=inline
     //% group="Dessins"
     export function pixel(x: number, y: number): void {
         console.log(`Pixel à (${x},${y})`)
@@ -122,10 +105,6 @@ namespace oled128x64 {
 
     /**
      * Dessine une ligne entre deux points
-     * @param x1 début x
-     * @param y1 début y
-     * @param x2 fin x
-     * @param y2 fin y
      */
     //% block="📏 ligne de (%x1,%y1) à (%x2,%y2)"
     //% inlineInputMode=inline
@@ -135,11 +114,7 @@ namespace oled128x64 {
     }
 
     /**
-     * Dessine un rectangle à la position choisie
-     * @param x coin supérieur gauche x
-     * @param y coin supérieur gauche y
-     * @param largeur largeur du rectangle
-     * @param hauteur hauteur du rectangle
+     * Dessine un rectangle vide à la position donnée
      */
     //% block="⬛ rectangle x %x y %y largeur %largeur hauteur %hauteur"
     //% inlineInputMode=inline
