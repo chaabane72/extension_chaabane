@@ -1,70 +1,125 @@
-// OLED 1.3" I2C Display Driver for MakeCode avec police ASCII 5x8
+
+
+// OLED 1.3" I2C Display Driver for MakeCode - CORRIGÉ
+// Basé sur contrôleur SSD1306/SSH1106
+
 namespace OLED {
+    // Adresse I2C - ESSAYEZ LES DEUX !
     let OLED_ADDRESS = 0x3C;
+    // let OLED_ADDRESS = 0x3D; // Décommentez si 0x3C ne marche pas
+
+    let _screenWidth = 128;
+    let _screenHeight = 64;
     let _x = 0;
     let _y = 0;
+
+    // Commandes
+    const SSD1306_SETCONTRAST = 0x81;
+    const SSD1306_DISPLAYALLON_RESUME = 0xA4;
+    const SSD1306_DISPLAYALLON = 0xA5;
+    const SSD1306_NORMALDISPLAY = 0xA6;
+    const SSD1306_INVERTDISPLAY = 0xA7;
+    const SSD1306_DISPLAYOFF = 0xAE;
+    const SSD1306_DISPLAYON = 0xAF;
+    const SSD1306_SETDISPLAYOFFSET = 0xD3;
+    const SSD1306_SETCOMPINS = 0xDA;
+    const SSD1306_SETVCOMDETECT = 0xDB;
+    const SSD1306_SETDISPLAYCLOCKDIV = 0xD5;
+    const SSD1306_SETPRECHARGE = 0xD9;
+    const SSD1306_SETMULTIPLEX = 0xA8;
+    const SSD1306_SETLOWCOLUMN = 0x00;
+    const SSD1306_SETHIGHCOLUMN = 0x10;
+    const SSD1306_SETSTARTLINE = 0x40;
+    const SSD1306_MEMORYMODE = 0x20;
+    const SSD1306_COLUMNADDR = 0x21;
+    const SSD1306_PAGEADDR = 0x22;
+    const SSD1306_COMSCANINC = 0xC0;
+    const SSD1306_COMSCANDEC = 0xC8;
+    const SSD1306_SEGREMAP = 0xA0;
+    const SSD1306_CHARGEPUMP = 0x8D;
+    const SSD1306_EXTERNALVCC = 0x1;
+    const SSD1306_SWITCHCAPVCC = 0x2;
+
     let _buffer: Buffer;
 
-    // Table ASCII 5x8 (extrait simplifié pour démonstration)
-    const font: number[][] = [
-        [0x00, 0x00, 0x00, 0x00, 0x00], // espace
-        [0x00, 0x00, 0x5F, 0x00, 0x00], // !
-        [0x00, 0x07, 0x00, 0x07, 0x00], // "
-        [0x14, 0x7F, 0x14, 0x7F, 0x14], // #
-        [0x24, 0x2A, 0x7F, 0x2A, 0x12], // $
-        [0x23, 0x13, 0x08, 0x64, 0x62], // %
-        [0x36, 0x49, 0x55, 0x22, 0x50], // &
-        [0x00, 0x05, 0x03, 0x00, 0x00], // '
-        [0x00, 0x1C, 0x22, 0x41, 0x00], // (
-        [0x00, 0x41, 0x22, 0x1C, 0x00], // )
-        [0x14, 0x08, 0x3E, 0x08, 0x14], // *
-        [0x08, 0x08, 0x3E, 0x08, 0x08], // +
-        [0x00, 0x50, 0x30, 0x00, 0x00], // ,
-        [0x08, 0x08, 0x08, 0x08, 0x08], // -
-        [0x00, 0x60, 0x60, 0x00, 0x00], // .
-        [0x20, 0x10, 0x08, 0x04, 0x02], // /
-        // ... ajoute plus tard jusqu'à ~ (code ASCII 126)
-    ];
-
-    //% block="initialiser OLED"
+    /**
+     * Initialise l'écran OLED
+     */
+    //% block="initialiser OLED"
+    //% weight=100
     export function init(): void {
-        _buffer = pins.createBuffer(1024); // 128x64 / 8
+        _buffer = pins.createBuffer(1024); // 128x64/8
         _buffer.fill(0);
-        writeCommand(0xAE); // display off
-        writeCommand(0x20); writeCommand(0x00); // horizontal mode
-        writeCommand(0xA1); // segment remap
-        writeCommand(0xC8); // COM output scan
-        writeCommand(0xDA); writeCommand(0x12);
-        writeCommand(0x81); writeCommand(0xCF);
-        writeCommand(0xA4);
-        writeCommand(0xA6);
-        writeCommand(0xD5); writeCommand(0x80);
-        writeCommand(0x8D); writeCommand(0x14);
-        writeCommand(0xAF); // display ON
+
+        // Séquence d'initialisation
+        writeCommand(SSD1306_DISPLAYOFF);
+        writeCommand(SSD1306_SETDISPLAYCLOCKDIV);
+        writeCommand(0x80);
+        writeCommand(SSD1306_SETMULTIPLEX);
+        writeCommand(0x3F);
+        writeCommand(SSD1306_SETDISPLAYOFFSET);
+        writeCommand(0x00);
+        writeCommand(SSD1306_SETSTARTLINE | 0x00);
+        writeCommand(SSD1306_CHARGEPUMP);
+        writeCommand(0x14);
+        writeCommand(SSD1306_MEMORYMODE);
+        writeCommand(0x00);
+        writeCommand(SSD1306_SEGREMAP | 0x01);
+        writeCommand(SSD1306_COMSCANDEC);
+        writeCommand(SSD1306_SETCOMPINS);
+        writeCommand(0x12);
+        writeCommand(SSD1306_SETCONTRAST);
+        writeCommand(0xCF);
+        writeCommand(SSD1306_SETPRECHARGE);
+        writeCommand(0xF1);
+        writeCommand(SSD1306_SETVCOMDETECT);
+        writeCommand(0x40);
+        writeCommand(SSD1306_DISPLAYALLON_RESUME);
+        writeCommand(SSD1306_NORMALDISPLAY);
+        writeCommand(SSD1306_DISPLAYON);
+
         clear();
         update();
     }
 
-    //% block="effacer écran"
+    /**
+     * Efface l'écran
+     */
+    //% block="effacer écran"
+    //% weight=90
     export function clear(): void {
         _buffer.fill(0);
         _x = 0;
         _y = 0;
     }
 
-    //% block="mettre à jour l'affichage"
+    /**
+     * Met à jour l'affichage
+     */
+    //% block="mettre à jour affichage"
+    //% weight=80
     export function update(): void {
-        writeCommand(0x21); writeCommand(0); writeCommand(127);
-        writeCommand(0x22); writeCommand(0); writeCommand(7);
+        writeCommand(SSD1306_COLUMNADDR);
+        writeCommand(0);
+        writeCommand(127);
+        writeCommand(SSD1306_PAGEADDR);
+        writeCommand(0);
+        writeCommand(7);
+
+        // Envoi des données
         let data = pins.createBuffer(_buffer.length + 1);
-        data[0] = 0x40;
+        data[0] = 0x40; // Mode données
         for (let i = 0; i < _buffer.length; i++) {
             data[i + 1] = _buffer[i];
         }
         pins.i2cWriteBuffer(OLED_ADDRESS, data);
     }
 
-    //% block="afficher texte %text"
+    /**
+     * Affiche du texte
+     */
+    //% block="afficher texte %text"
+    //% weight=70
     export function showString(text: string): void {
         for (let i = 0; i < text.length; i++) {
             drawChar(text.charAt(i));
@@ -72,7 +127,11 @@ namespace OLED {
         update();
     }
 
-    //% block="position curseur x %x y %y"
+    /**
+     * Positionne le curseur
+     */
+    //% block="positionner curseur x %x y %y"
+    //% weight=60
     export function setCursor(x: number, y: number): void {
         _x = x * 6;
         _y = y * 8;
@@ -84,14 +143,13 @@ namespace OLED {
             _y += 8;
         }
 
-        let code = c.charCodeAt(0);
-        if (code < 32 || code > 126) code = 32;
-        let charData = font[code - 32];
-
+        // Police très basique 5x8
         for (let i = 0; i < 5; i++) {
-            let line = charData[i];
+            let line = 0xFF; // Tous les pixels allumés pour test
             for (let j = 0; j < 8; j++) {
-                drawPixel(_x + i, _y + j, (line >> j) & 1);
+                if (line & (1 << j)) {
+                    drawPixel(_x + i, _y + j, 1);
+                }
             }
         }
         _x += 6;
@@ -99,16 +157,21 @@ namespace OLED {
 
     function drawPixel(x: number, y: number, color: number): void {
         if (x < 0 || x >= 128 || y < 0 || y >= 64) return;
+
         let page = Math.idiv(y, 8);
         let bit = y % 8;
         let index = x + page * 128;
-        if (color) _buffer[index] |= (1 << bit);
-        else _buffer[index] &= ~(1 << bit);
+
+        if (color) {
+            _buffer[index] |= (1 << bit);
+        } else {
+            _buffer[index] &= ~(1 << bit);
+        }
     }
 
     function writeCommand(cmd: number): void {
         let buf = pins.createBuffer(2);
-        buf[0] = 0x00;
+        buf[0] = 0x00; // Mode commande
         buf[1] = cmd;
         pins.i2cWriteBuffer(OLED_ADDRESS, buf);
     }
