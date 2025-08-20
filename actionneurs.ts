@@ -319,4 +319,6 @@ namespace actionneurs {
         const pct = Math.max(0, Math.min(100, Math.round(pourcentage)))
         return Math.idiv(pct * 1023, 100)
     }
+     // ---------- AVANCÉ1 ----------
+
 }
