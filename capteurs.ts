@@ -1,5 +1,5 @@
 /**
- * Capteurs de lumière — un seul bloc : choisir la référence et la broche → % (0–100)
+ * Capteurs de lumière — un seul bloc : choisir la référence et la broche → 0–100
  */
 //% color=#00C0C0 icon="\uf185" block="Capteurs"
 //% groups=["Lumière"]
@@ -30,7 +30,6 @@ namespace capteurs {
     }
 
     function clamp(n: number, min: number, max: number) { return Math.max(min, Math.min(max, n)) }
-
     function mapToPercent(adc: number, a: number, b: number): number {
         const low = Math.min(a, b), high = Math.max(a, b)
         if (high - low <= 0) return 0
@@ -38,17 +37,18 @@ namespace capteurs {
     }
 
     /**
-     * 💡 Lire la lumière en % (0–100) — choisir la broche et la référence du capteur
+     * 💡 Lire la lumière (0–100) — choisir la broche et la référence du capteur
      * (calibré automatiquement en interne)
      */
-    //% block="💡 lumière en %% sur %pin capteur %ref"
+    //% block="💡 lumière (0–100) sur %broche capteur %ref"
     //% inlineInputMode=inline
-    //% pin.defl=AnalogPin.P1
+    //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=3
+    //% broche.defl=AnalogPin.P1
     //% ref.defl=RefLumiere.LDR_10k_GL5528
     //% group="Lumière"
-    export function luminositePourcent(pin: AnalogPin, ref: RefLumiere): number {
-        const adc = pins.analogReadPin(pin)     // 0..1023
-        const [noir, clair] = noirClair(ref)    // seuils selon la référence
-        return mapToPercent(adc, noir, clair)   // 0..100
+    export function luminositePourcent(broche: AnalogPin, ref: RefLumiere): number {
+        const adc = pins.analogReadPin(broche)     // 0..1023
+        const [noir, clair] = noirClair(ref)       // seuils selon la référence
+        return mapToPercent(adc, noir, clair)      // 0..100
     }
 }
