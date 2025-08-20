@@ -1,5 +1,6 @@
 /**
  * Module pour écran OLED 128x64 I2C (SSD1306)
+ * Connexion I2C obligatoire : SCL → P19, SDA → P20
  */
 //% color=#0096FF icon="\uf26c" block="OLED 128x64"
 //% groups=["Initialisation", "Affichage", "Dessins"]
@@ -64,7 +65,8 @@ namespace oled128x64 {
     // --- INITIALISATION ---
 
     /**
-     * Initialisent l'écran OLED avec les broches et la taille de texte choisie
+     * Initialiser l'écran OLED (SSD1306) sur le bus I2C
+     * ⚠️ Connexion obligatoire : SCL → P19, SDA → P20
      * @param sda broche SDA, eg: DigitalPin.P20
      * @param scl broche SCL, eg: DigitalPin.P19
      * @param taillePolice 1 (petit), 2 (moyen), 3 (grand)
@@ -92,20 +94,20 @@ namespace oled128x64 {
      * @param y position verticale (0..63)
      */
     //% block="📝 afficher %texte à x %x y %y"
-
+    //% inlineInputMode=inline
     //% x.min=0 x.max=127 y.min=0 y.max=63
     //% group="Affichage"
     export function afficherTexte(texte: string, x: number, y: number): void {
-        // Ceci nécessite une lib externe pour affichage complexe.
-        // Placeholder : afficher un message en console (pour développement)
         console.log(`Texte "${texte}" à (${x},${y})`)
     }
 
+    // --- DESSINS ---
+
     /**
-  * Dessine un pixel à une position donnée
-  * @param x position horizontale (0..127)
-  * @param y position verticale (0..63)
-  */
+     * Dessine un pixel à une position donnée
+     * @param x position horizontale (0..127)
+     * @param y position verticale (0..63)
+     */
     //% block="🔲 pixel à x %x y %y"
     //% inlineInputMode=inline
     //% x.min=0 x.max=127 y.min=0 y.max=63
