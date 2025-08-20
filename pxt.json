@@ -11,7 +11,8 @@
         "actionneurs.ts",
         "capteurs.ts",
         "rfid.ts",
-        "RS522RFID.ts"
+        "RS522RFID.ts",
+        "Oled.ts"
     ],
     "testFiles": [],
     "public": true,
