@@ -64,26 +64,16 @@ namespace actionneurs {
     }
 
     /**
-     
-     /**
- * 🔴 Fondu progressif sur une LED (de … à … en ms)
- */
-    //% block="🔴 fondu LED sur %broche de %dePct|%% à %versPct|%% en %dureeMs|ms"
+     * 🔴 Fondu progressif sur une LED (de … à … en ms)
+     */
+    //% block="🔴 fondu LED sur %broche de %dePct %% à %versPct %% en %dureeMs ms"
     //% inlineInputMode=inline
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
-    //% dePct.min=0 dePct.max=100
-    //% versPct.min=0 versPct.max=100
-    //% dureeMs.min=10 dureeMs.max=10000
-    //% dePct.shadow="number" dePct.shadowOptions.value=0
-    //% versPct.shadow="number" versPct.shadowOptions.value=100
-    //% dureeMs.shadow="number" dureeMs.shadowOptions.value=1000
+    //% dePct.min=0 dePct.max=100 dePct.defl=0
+    //% versPct.min=0 versPct.max=100 versPct.defl=100
+    //% dureeMs.min=10 dureeMs.max=10000 dureeMs.defl=1000
     //% group="LEDs"
-    export function fonduLED(
-        broche: AnalogPin,
-        dePct: number,
-        versPct: number,
-        dureeMs: number
-    ): void {
+    export function fonduLED(broche: AnalogPin, dePct: number, versPct: number, dureeMs: number): void {
         const a = Math.max(0, Math.min(100, Math.round(dePct)))
         const b = Math.max(0, Math.min(100, Math.round(versPct)))
         const pas = a <= b ? 1 : -1
@@ -95,8 +85,6 @@ namespace actionneurs {
         }
         pins.analogWritePin(broche, Math.idiv(b * 1023, 100))
     }
-
-
 
     /**
      * 🔴 Affichage binaire (0..63) sur 6 LEDs — bloc unique valeur + 6 pins
