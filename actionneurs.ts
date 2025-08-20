@@ -68,18 +68,19 @@ namespace actionneurs {
         }
     }
 
-    /**
-     * 🔴 Transition (fondu) entre deux niveaux de luminosité
-     * @param broche la broche PWM
-     * @param dePct de % (0..100), eg: 0
-     * @param versPct vers % (0..100), eg: 100
-     * @param dureeMs durée totale en ms, eg: 1000
-     */
-    //% block="🔴 fondu LED sur %broche de %dePct %% à %versPct %% en %dureeMs ms"
+
+ /**
+ * 🔴 Fondu progressif d'une LED
+ * @param broche la broche PWM
+ * @param dePct valeur de départ en %, eg: 0
+ * @param versPct valeur d'arrivée en %, eg: 100
+ * @param dureeMs durée totale du fondu en ms, eg: 1000
+ */
+    //% block="🔴 fondu LED sur %broche | de %dePct %% | vers %versPct %% | durée %dureeMs ms"
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% dePct.min=0 dePct.max=100 versPct.min=0 versPct.max=100
     //% dureeMs.min=10 dureeMs.max=10000
-    //% group="LEDs"
+    //% group="Effets"
     export function fonduLED(broche: AnalogPin, dePct: number, versPct: number, dureeMs: number): void {
         const a = Math.max(0, Math.min(100, Math.round(dePct)))
         const b = Math.max(0, Math.min(100, Math.round(versPct)))
@@ -92,6 +93,7 @@ namespace actionneurs {
         }
         pins.analogWritePin(broche, Math.idiv(b * 1023, 100))
     }
+
 
     /**
      * 🔴 Allume une LED pendant une durée déterminée en secondes
@@ -161,7 +163,11 @@ namespace actionneurs {
         const maxA = Math.max(minAngle, maxAngle)
         const cible = Math.max(minA, Math.min(maxA, Math.round(angle)))
 
-        let positionActuelle = (key in _servoMemo) ? _servoMemo[key] : 90
+        let positionActuelle = 90
+        if (_servoMemo[key] || _servoMemo[key] == 0) {
+            positionActuelle = _servoMemo[key]
+        }
+
         const step = cible > positionActuelle ? 1 : -1
 
         for (let pos = positionActuelle; pos != cible; pos += step) {
@@ -170,6 +176,7 @@ namespace actionneurs {
         }
         pins.servoWritePin(broche, cible)
         _servoMemo[key] = cible
+
 
         //////////////
     }
