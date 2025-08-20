@@ -70,18 +70,24 @@ namespace actionneurs {
 
 
  /**
+ /**
  * 🔴 Fondu progressif d'une LED
  * @param broche la broche PWM
  * @param dePct valeur de départ en %, eg: 0
  * @param versPct valeur d'arrivée en %, eg: 100
  * @param dureeMs durée totale du fondu en ms, eg: 1000
  */
-    //% block="🔴 fondu LED sur %broche | de %dePct %% | vers %versPct %% | durée %dureeMs ms"
+    //% block="🔴 fondu LED sur %broche de %dePct|%% à %versPct|%% en %dureeMs|ms"
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% dePct.min=0 dePct.max=100 versPct.min=0 versPct.max=100
     //% dureeMs.min=10 dureeMs.max=10000
     //% group="Effets"
-    export function fonduLED(broche: AnalogPin, dePct: number, versPct: number, dureeMs: number): void {
+    export function fonduLED(
+        broche: AnalogPin,
+        dePct: number,
+        versPct: number,
+        dureeMs: number
+    ): void {
         const a = Math.max(0, Math.min(100, Math.round(dePct)))
         const b = Math.max(0, Math.min(100, Math.round(versPct)))
         const pas = a <= b ? 1 : -1
