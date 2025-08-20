@@ -1,37 +1,26 @@
 /**
- * Capteurs de lumière (LDR, TEMT6000…) pour micro:bit
+ * Capteurs de lumière — choix du capteur dans le bloc, mesure en %
  */
 //% color=#00C0C0 icon="\uf185" block="Capteurs"
-//% groups=["Lumière", "Calibration"]
+//% groups=["Lumière"]
 namespace capteurs {
 
-    // ----------- LISTE DES CAPTEURS -----------
-
     /**
-     * Types de capteurs de lumière supportés
+     * Types de capteurs de lumière (sélection dans le bloc)
      */
     export enum TypeCapteurLumiere {
         //% block="LDR + 10kΩ (GL5528)"
-        LDR_10k = 0,
+        LDR_10k_GL5528 = 0,
         //% block="LDR + 100kΩ"
         LDR_100k = 1,
         //% block="TEMT6000 (analogique)"
-        TEMT6000 = 2
+        TEMT6000 = 2,
+        //% block="KY-018 (photorésistance)"
+        KY018 = 3
     }
 
-    /**
-     * Unité de sortie
-     */
-    export enum UniteLum {
-        //% block="brut (0–1023)"
-        Brut = 0,
-        //% block="% (0–100)"
-        Pourcent = 1
-    }
-
-    // ----------- CALIBRATIONS PAR DÉFAUT -----------
-
-    // Valeurs "noir" (obscurité) et "clair" (pleine lumière) par type (0..1023)
+    // ---- Calibrations par défaut (interne) : 0..1023 → 0..100 %
+    // (valeurs empiriques simples pour éviter un bloc de calibration)
     let _noir_LDR10k = 80
     let _clair_LDR10k = 900
 
@@ -41,8 +30,10 @@ namespace capteurs {
     let _noir_TEMT6000 = 0
     let _clair_TEMT6000 = 900
 
-    // ----------- OUTILS INTERNES -----------
+    let _noir_KY018 = 20
+    let _clair_KY018 = 900
 
+    // ---- Outils internes
     function clamp(n: number, min: number, max: number): number {
         return Math.max(min, Math.min(max, n))
     }
@@ -58,54 +49,34 @@ namespace capteurs {
     function getNoirClair(t: TypeCapteurLumiere): number[] {
         if (t == TypeCapteurLumiere.LDR_100k) return [_noir_LDR100k, _clair_LDR100k]
         if (t == TypeCapteurLumiere.TEMT6000) return [_noir_TEMT6000, _clair_TEMT6000]
+        if (t == TypeCapteurLumiere.KY018) return [_noir_KY018, _clair_KY018]
         // défaut
         return [_noir_LDR10k, _clair_LDR10k]
     }
 
-    // ----------- MESURE -----------
-
     /**
-     * 💡 Mesurer la lumière avec un capteur choisi (brut ou %)
-     * - Brut = 0..1023 (lecture ADC)
-     * - % = mappé entre 'noir' et 'clair' (selon le type)
+     * 💡 Lire la lumière en % (0–100) — choisir la broche et le capteur
+     * (calibrage automatique interne selon le capteur choisi)
      */
-    //% block="💡 lumière sur %broche capteur %type en %unite"
+    //% block="💡 lumière (%) sur %broche capteur %type"
     //% inlineInputMode=inline
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=3
-    //% type.defl=TypeCapteurLumiere.LDR_10k
-    //% unite.defl=UniteLum.Pourcent
+    //% type.defl=TypeCapteurLumiere.LDR_10k_GL5528
     //% group="Lumière"
-    export function mesurerLumiere(
-        broche: AnalogPin,
-        type: TypeCapteurLumiere,
-        unite: UniteLum
-    ): number {
+    export function lumierePourcentSimple(broche: AnalogPin, type: TypeCapteurLumiere): number {
         const adc = pins.analogReadPin(broche) // 0..1023
-        if (unite == UniteLum.Brut) {
-            return adc
-        } else {
-            const nc = getNoirClair(type)
-            return mapToPercent(adc, nc[0], nc[1])
-        }
+        const nc = getNoirClair(type)
+        return mapToPercent(adc, nc[0], nc[1]) // retourne 0..100
     }
 
-    // ----------- CALIBRATION (OPTIONNEL) -----------
-
     /**
-     * 🔧 Recalibrer les valeurs 'noir' et 'clair' pour un type de capteur
-     * - noir = lecture en obscurité
-     * - clair = lecture en pleine lumière
+     * 💡 (optionnel) Lire la lumière brute (0–1023) — utile si tu veux montrer l'ADC
      */
-    //% block="🔧 calibrer %type noir %noir clair %clair"
+    //% block="💡 lumière brute (0–1023) sur %broche"
     //% inlineInputMode=inline
-    //% noir.min=0 noir.max=1023 noir.defl=100
-    //% clair.min=0 clair.max=1023 clair.defl=900
-    //% group="Calibration"
-    export function calibrerLumiere(type: TypeCapteurLumiere, noir: number, clair: number): void {
-        const n = clamp(noir, 0, 1023)
-        const c = clamp(clair, 0, 1023)
-        if (type == TypeCapteurLumiere.LDR_100k) { _noir_LDR100k = n; _clair_LDR100k = c; return }
-        if (type == TypeCapteurLumiere.TEMT6000) { _noir_TEMT6000 = n; _clair_TEMT6000 = c; return }
-        _noir_LDR10k = n; _clair_LDR10k = c
+    //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=3
+    //% group="Lumière"
+    export function lumiereBrute(broche: AnalogPin): number {
+        return pins.analogReadPin(broche)
     }
 }
