@@ -92,6 +92,7 @@ namespace oled128x64 {
      * @param y position verticale (0..63)
      */
     //% block="📝 afficher %texte à x %x y %y"
+
     //% x.min=0 x.max=127 y.min=0 y.max=63
     //% group="Affichage"
     export function afficherTexte(texte: string, x: number, y: number): void {
@@ -100,21 +101,16 @@ namespace oled128x64 {
         console.log(`Texte "${texte}" à (${x},${y})`)
     }
 
-    // --- DESSINS SIMPLES ---
-
     /**
-     * Dessine un pixel à une position donnée
-     * @param x position horizontale (0..127)
-     * @param y position verticale (0..63)
-     */
+  * Dessine un pixel à une position donnée
+  * @param x position horizontale (0..127)
+  * @param y position verticale (0..63)
+  */
     //% block="🔲 pixel à x %x y %y"
-    //% x.min=0 x.max=127 y.min=0 y.max=63
-
     //% inlineInputMode=inline
-
+    //% x.min=0 x.max=127 y.min=0 y.max=63
     //% group="Dessins"
     export function pixel(x: number, y: number): void {
-        // Ceci est un exemple simple — implémentation complète possible avec buffer
         console.log(`Pixel à (${x},${y})`)
     }
 
@@ -126,6 +122,7 @@ namespace oled128x64 {
      * @param y2 fin y
      */
     //% block="📏 ligne de (%x1,%y1) à (%x2,%y2)"
+    //% inlineInputMode=inline
     //% group="Dessins"
     export function ligne(x1: number, y1: number, x2: number, y2: number): void {
         console.log(`Ligne de (${x1},${y1}) à (${x2},${y2})`)
@@ -139,9 +136,9 @@ namespace oled128x64 {
      * @param hauteur hauteur du rectangle
      */
     //% block="⬛ rectangle x %x y %y largeur %largeur hauteur %hauteur"
+    //% inlineInputMode=inline
     //% group="Dessins"
     export function rectangle(x: number, y: number, largeur: number, hauteur: number): void {
         console.log(`Rectangle à (${x},${y}) de ${largeur}x${hauteur}`)
     }
-
 }
