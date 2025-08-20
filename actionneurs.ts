@@ -77,7 +77,7 @@ namespace actionneurs {
  * @param versPct valeur d'arrivée en %, eg: 100
  * @param dureeMs durée totale du fondu en ms, eg: 1000
  */
-    //% block="🔴 fondu LED sur %broche de %dePct|%% à %versPct|%% en %dureeMs|ms"
+    //% block="🔴 fondu LED sur %broche de %dePct %% vers %versPct %% en %dureeMs ms"
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
     //% dePct.min=0 dePct.max=100 versPct.min=0 versPct.max=100
     //% dureeMs.min=10 dureeMs.max=10000
@@ -99,6 +99,7 @@ namespace actionneurs {
         }
         pins.analogWritePin(broche, Math.idiv(b * 1023, 100))
     }
+
 
 
     /**
