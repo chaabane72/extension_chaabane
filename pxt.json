@@ -9,7 +9,8 @@
     },
     "files": [
         "actionneurs.ts",
-        "capteurs.ts"
+        "capteurs.ts",
+        "rfid.ts"
     ],
     "testFiles": [],
     "public": true,
