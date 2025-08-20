@@ -68,12 +68,15 @@ namespace actionneurs {
      /**
  * 🔴 Fondu progressif sur une LED (de … à … en ms)
  */
-    //% block="🔴 fondu LED sur %broche de %dePct %% à %versPct %% en %dureeMs ms"
+    //% block="🔴 fondu LED sur %broche de %dePct|%% à %versPct|%% en %dureeMs|ms"
     //% inlineInputMode=inline
     //% broche.fieldEditor="gridpicker" broche.fieldOptions.columns=4
-    //% dePct.min=0 dePct.max=100 dePct.defl=0
-    //% versPct.min=0 versPct.max=100 versPct.defl=100
-    //% dureeMs.min=10 dureeMs.max=10000 dureeMs.defl=1000
+    //% dePct.min=0 dePct.max=100
+    //% versPct.min=0 versPct.max=100
+    //% dureeMs.min=10 dureeMs.max=10000
+    //% dePct.shadow="number" dePct.shadowOptions.value=0
+    //% versPct.shadow="number" versPct.shadowOptions.value=100
+    //% dureeMs.shadow="number" dureeMs.shadowOptions.value=1000
     //% group="LEDs"
     export function fonduLED(
         broche: AnalogPin,
@@ -92,6 +95,7 @@ namespace actionneurs {
         }
         pins.analogWritePin(broche, Math.idiv(b * 1023, 100))
     }
+
 
 
     /**
