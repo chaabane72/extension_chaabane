@@ -197,7 +197,7 @@ namespace rc522 {
     /**
      * Une carte est-elle présente sur le lecteur ?
      */
-    //% block="🔎 carte présente ?"
+    //% block="🔎 carte présentes ?"
     //% group="Lecture"
     export function cartePresente(): boolean {
         if (!_inited) return false
