@@ -64,7 +64,7 @@ namespace oled128x64 {
     // --- INITIALISATION ---
 
     /**
-     * Initialise l'écran OLED avec les broches et la taille de texte choisie
+     * Initialisent l'écran OLED avec les broches et la taille de texte choisie
      * @param sda broche SDA, eg: DigitalPin.P20
      * @param scl broche SCL, eg: DigitalPin.P19
      * @param taillePolice 1 (petit), 2 (moyen), 3 (grand)
