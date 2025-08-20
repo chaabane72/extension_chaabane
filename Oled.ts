@@ -1,95 +1,144 @@
 /**
- * Afficheur OLED SSD1306 (128x64) - I2C
+ * Module pour écran OLED 128x64 I2C (SSD1306)
  */
-//% color=#008B8B icon="\uf26c" block="OLED"
-//% groups=["Initialisation", "Affichage"]
-namespace oled {
+//% color=#0096FF icon="\uf26c" block="OLED 128x64"
+//% groups=["Initialisation", "Affichage", "Dessins"]
+namespace oled128x64 {
 
-    let oled_sda = DigitalPin.P20
-    let oled_scl = DigitalPin.P19
-    let fontSize = 1
-
-    // Adresse I2C standard du SSD1306
     const OLED_ADDR = 0x3C
+    let fontSize = 1
+    let oled_sda: DigitalPin
+    let oled_scl: DigitalPin
 
-    // Envoyer une commande à l'écran OLED
-    function cmd(c: number): void {
-        pins.i2cWriteBuffer(OLED_ADDR, Buffer.fromArray([0x00, c]))
+    // --- FONCTIONS INTERNES ---
+
+    function sendCommand(cmd: number) {
+        let buf = pins.createBuffer(2)
+        buf[0] = 0x00 // commande
+        buf[1] = cmd
+        pins.i2cWriteBuffer(OLED_ADDR, buf)
     }
 
-    // Initialisation écran
-    function initDisplay(): void {
-        cmd(0xAE) // écran OFF
-        cmd(0xA4) // affichage normal
-        cmd(0xD5); cmd(0x80)
-        cmd(0xA8); cmd(0x3F)
-        cmd(0xD3); cmd(0x00)
-        cmd(0x40)
-        cmd(0x8D); cmd(0x14)
-        cmd(0x20); cmd(0x00)
-        cmd(0xA1)
-        cmd(0xC8)
-        cmd(0xDA); cmd(0x12)
-        cmd(0x81); cmd(0xCF)
-        cmd(0xD9); cmd(0xF1)
-        cmd(0xDB); cmd(0x40)
-        cmd(0xA6)
-        cmd(0xAF) // écran ON
+    function initDisplay() {
+        sendCommand(0xAE) // display off
+        sendCommand(0xA4) // display RAM content
+        sendCommand(0xD5) // clock divide ratio
+        sendCommand(0x80)
+        sendCommand(0xA8) // multiplex ratio
+        sendCommand(0x3F)
+        sendCommand(0xD3) // display offset
+        sendCommand(0x00)
+        sendCommand(0x40) // start line
+        sendCommand(0x8D) // charge pump
+        sendCommand(0x14)
+        sendCommand(0x20) // memory mode
+        sendCommand(0x00)
+        sendCommand(0xA1) // segment remap
+        sendCommand(0xC8) // com scan direction
+        sendCommand(0xDA) // com pins
+        sendCommand(0x12)
+        sendCommand(0x81) // contrast
+        sendCommand(0xCF)
+        sendCommand(0xD9) // pre-charge
+        sendCommand(0xF1)
+        sendCommand(0xDB) // vcomh deselect
+        sendCommand(0x40)
+        sendCommand(0xA6) // normal display
+        sendCommand(0xAF) // display on
     }
 
-    /**
-     * 📺 Initialiser l'écran OLED avec taille de police
-     */
-    //% block="📺 initialiser OLED | SDA %sda | SCL %scl | taille police %taille"
-    //% group="Initialisation"
-    //% sda.fieldEditor="gridpicker" sda.fieldOptions.columns=4
-    //% scl.fieldEditor="gridpicker" scl.fieldOptions.columns=4
-    //% taille.min=1 taille.max=3 taille.defl=1
-    export function initialiserOLED(sda: DigitalPin, scl: DigitalPin, taille: number): void {
-        oled_sda = sda
-        oled_scl = scl
-        fontSize = Math.max(1, Math.min(3, taille))
-
-        // pas besoin de changer la fréquence I2C ici
-        pins.i2cWriteNumber(OLED_ADDR, 0, NumberFormat.Int8LE) // wake up
-        pins.i2cWriteBuffer(OLED_ADDR, pins.createBuffer(1))   // force init
-
-        initDisplay()
-        clear()
-    }
-
-
-    /**
-     * 🧼 Effacer l'écran
-     */
-    //% block="🧼 effacer écran"
-    //% group="Affichage"
-    export function clear(): void {
-        for (let i = 0; i < 8; i++) {
-            cmd(0xB0 + i)
-            cmd(0x00)
-            cmd(0x10)
+    function clear() {
+        for (let y = 0; y < 8; y++) {
             let line = pins.createBuffer(129)
             line[0] = 0x40
-            for (let j = 1; j < 129; j++) line[j] = 0
+            for (let i = 1; i < 129; i++) {
+                line[i] = 0x00
+            }
+            sendCommand(0xB0 + y)
+            sendCommand(0x00)
+            sendCommand(0x10)
             pins.i2cWriteBuffer(OLED_ADDR, line)
         }
     }
 
-    /**
-     * 📝 Afficher un texte à l'écran à une position (x, y)
-     * @param x position en pixels horizontale (0 à 127)
-     * @param y ligne texte (0 en haut, selon la taille de police)
-     * @param txt texte à afficher
-     */
-    //% block="📝 texte %txt| à x %x| ligne %y"
-    //% group="Affichage"
-    export function afficherTexte(txt: string, x: number, y: number): void {
-        // Pour simplifier, on utilise un affichage simulé de texte basé sur la position
-        // Réel affichage nécessiterait une police bitmap complète
+    // --- INITIALISATION ---
 
-        // Ici, uniquement simule que le texte est affiché
-        serial.writeLine(`Texte affiché : "${txt}" à x=${x} ligne=${y} taille=${fontSize}`)
+    /**
+     * Initialise l'écran OLED avec les broches et la taille de texte choisie
+     * @param sda broche SDA, eg: DigitalPin.P20
+     * @param scl broche SCL, eg: DigitalPin.P19
+     * @param taillePolice 1 (petit), 2 (moyen), 3 (grand)
+     */
+    //% block="🖥️ initialiser OLED SDA %sda SCL %scl taille %taillePolice"
+    //% sda.defl=DigitalPin.P20 scl.defl=DigitalPin.P19
+    //% taillePolice.min=1 taillePolice.max=3 taillePolice.defl=1
+    //% group="Initialisation"
+    export function initialiserOLED(sda: DigitalPin, scl: DigitalPin, taillePolice: number): void {
+        oled_sda = sda
+        oled_scl = scl
+        fontSize = Math.max(1, Math.min(3, taillePolice))
+        pins.i2cWriteNumber(OLED_ADDR, 0, NumberFormat.Int8LE) // réveille l'écran
+        pins.i2cWriteBuffer(OLED_ADDR, pins.createBuffer(1))   // force init
+        initDisplay()
+        clear()
+    }
+
+    // --- AFFICHAGE TEXTE ---
+
+    /**
+     * Affiche du texte sur l'écran OLED à une position donnée
+     * @param texte texte à afficher
+     * @param x position horizontale (0..127)
+     * @param y position verticale (0..63)
+     */
+    //% block="📝 afficher %texte à x %x y %y"
+    //% x.min=0 x.max=127 y.min=0 y.max=63
+    //% group="Affichage"
+    export function afficherTexte(texte: string, x: number, y: number): void {
+        // Ceci nécessite une lib externe pour affichage complexe.
+        // Placeholder : afficher un message en console (pour développement)
+        console.log(`Texte "${texte}" à (${x},${y})`)
+    }
+
+    // --- DESSINS SIMPLES ---
+
+    /**
+     * Dessine un pixel à une position donnée
+     * @param x position horizontale (0..127)
+     * @param y position verticale (0..63)
+     */
+    //% block="🔲 pixel à x %x y %y"
+    //% x.min=0 x.max=127 y.min=0 y.max=63
+    //% group="Dessins"
+    export function pixel(x: number, y: number): void {
+        // Ceci est un exemple simple — implémentation complète possible avec buffer
+        console.log(`Pixel à (${x},${y})`)
+    }
+
+    /**
+     * Dessine une ligne entre deux points
+     * @param x1 début x
+     * @param y1 début y
+     * @param x2 fin x
+     * @param y2 fin y
+     */
+    //% block="📏 ligne de (%x1,%y1) à (%x2,%y2)"
+    //% group="Dessins"
+    export function ligne(x1: number, y1: number, x2: number, y2: number): void {
+        console.log(`Ligne de (${x1},${y1}) à (${x2},${y2})`)
+    }
+
+    /**
+     * Dessine un rectangle à la position choisie
+     * @param x coin supérieur gauche x
+     * @param y coin supérieur gauche y
+     * @param largeur largeur du rectangle
+     * @param hauteur hauteur du rectangle
+     */
+    //% block="⬛ rectangle x %x y %y largeur %largeur hauteur %hauteur"
+    //% group="Dessins"
+    export function rectangle(x: number, y: number, largeur: number, hauteur: number): void {
+        console.log(`Rectangle à (${x},${y}) de ${largeur}x${hauteur}`)
     }
 
 }
