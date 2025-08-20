@@ -1,6 +1,5 @@
 /**
  * Module pour écran OLED 128x64 I2C (SSD1306)
- * Connexion I2C obligatoire : SCL → P19, SDA → P20
  */
 //% color=#0096FF icon="\uf26c" block="OLED 128x64"
 //% groups=["Initialisation", "Affichage", "Dessins"]
@@ -66,13 +65,19 @@ namespace oled128x64 {
 
     /**
      * Initialiser l'écran OLED (SSD1306) sur le bus I2C
-     * ⚠️ Connexion obligatoire : SCL → P19, SDA → P20
-     * @param sda broche SDA, eg: DigitalPin.P20
-     * @param scl broche SCL, eg: DigitalPin.P19
+     * ⚠️ Connexion obligatoire : SDA → P20, SCL → P19
+     * @param sda broche SDA (fixée à P20)
+     * @param scl broche SCL (fixée à P19)
      * @param taillePolice 1 (petit), 2 (moyen), 3 (grand)
      */
     //% block="🖥️ initialiser OLED SDA %sda SCL %scl taille %taillePolice"
     //% sda.defl=DigitalPin.P20 scl.defl=DigitalPin.P19
+    //% sda.fieldEditor="gridpicker" sda.fieldOptions.columns=1
+    //% sda.fieldOptions.decompileLiterals=true
+    //% sda.fieldOptions.options="DigitalPin.P20"
+    //% scl.fieldEditor="gridpicker" scl.fieldOptions.columns=1
+    //% scl.fieldOptions.decompileLiterals=true
+    //% scl.fieldOptions.options="DigitalPin.P19"
     //% taillePolice.min=1 taillePolice.max=3 taillePolice.defl=1
     //% group="Initialisation"
     export function initialiserOLED(sda: DigitalPin, scl: DigitalPin, taillePolice: number): void {
@@ -94,14 +99,13 @@ namespace oled128x64 {
      * @param y position verticale (0..63)
      */
     //% block="📝 afficher %texte à x %x y %y"
-    //% inlineInputMode=inline
     //% x.min=0 x.max=127 y.min=0 y.max=63
     //% group="Affichage"
     export function afficherTexte(texte: string, x: number, y: number): void {
         console.log(`Texte "${texte}" à (${x},${y})`)
     }
 
-    // --- DESSINS ---
+    // --- DESSINS SIMPLES ---
 
     /**
      * Dessine un pixel à une position donnée
