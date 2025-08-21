@@ -32,7 +32,6 @@ namespace OLED {
     const chipAdress = 0x3C
     const xOffset = 0
     const yOffset = 0
-
     let charX = 0               // position X en pixels
     let charY = 0               // position Y en pages (8 px)
     let displayWidth = 128
@@ -191,130 +190,56 @@ namespace OLED {
         charX = xOffset
     }
 
-    // ====== Gestion des accents ======
+    // --- gestion de l'accent aigu pour 'é' / 'É' ---
+    function isSmallEAcute(c: string): boolean { return c === "é" }
+    function isCapitalEAcute(c: string): boolean { return c === "É" }
 
-    // // ====== Gestion des accents ======
-    function decomposeChar(c: string): { base: string, accent: Array<{ col: number, row: number }> } {
-        const code = c.charCodeAt(0)
-        let base = c
-        let acc: Array<{ col: number, row: number }> = []
-
-        // petit utilitaire compatible MakeCode : push un point d'accent à la fois
-        function add(col: number, row: number) {
-            acc.push({ col: col, row: row })
-        }
-
-        // helpers qui n'appellent que add(...)
-        function acute() {             // ´
-            add(3, 0); add(4, 1)
-        }
-        function grave() {             // `
-            add(1, 0); add(0, 1)
-        }
-        function circumflex() {        // ^
-            add(2, 0); add(1, 1); add(3, 1)
-        }
-        function diaeresis() {         // ¨
-            add(1, 0); add(3, 0)
-        }
-        function cedilla() {           // ¸ (approché)
-            add(2, 7); add(3, 7)
-        }
-
-        // é É
-        if (code === 233) { base = "e"; acute() }
-        else if (code === 201) { base = "E"; acute() }
-        // è È
-        else if (code === 232) { base = "e"; grave() }
-        else if (code === 200) { base = "E"; grave() }
-        // ê Ê
-        else if (code === 234) { base = "e"; circumflex() }
-        else if (code === 202) { base = "E"; circumflex() }
-        // ë Ë
-        else if (code === 235) { base = "e"; diaeresis() }
-        else if (code === 203) { base = "E"; diaeresis() }
-        // à À
-        else if (code === 224) { base = "a"; grave() }
-        else if (code === 192) { base = "A"; grave() }
-        // â Â
-        else if (code === 226) { base = "a"; circumflex() }
-        else if (code === 194) { base = "A"; circumflex() }
-        // ä Ä
-        else if (code === 228) { base = "a"; diaeresis() }
-        else if (code === 196) { base = "A"; diaeresis() }
-        // ù Ù
-        else if (code === 249) { base = "u"; grave() }
-        else if (code === 217) { base = "U"; grave() }
-        // û Û
-        else if (code === 251) { base = "u"; circumflex() }
-        else if (code === 219) { base = "U"; circumflex() }
-        // ü Ü
-        else if (code === 252) { base = "u"; diaeresis() }
-        else if (code === 220) { base = "U"; diaeresis() }
-        // î Î
-        else if (code === 238) { base = "i"; circumflex() }
-        else if (code === 206) { base = "I"; circumflex() }
-        // ï Ï
-        else if (code === 239) { base = "i"; diaeresis() }
-        else if (code === 207) { base = "I"; diaeresis() }
-        // ô Ô
-        else if (code === 244) { base = "o"; circumflex() }
-        else if (code === 212) { base = "O"; circumflex() }
-        // ö Ö
-        else if (code === 246) { base = "o"; diaeresis() }
-        else if (code === 214) { base = "O"; diaeresis() }
-        // ç Ç
-        else if (code === 231) { base = "c"; cedilla() }
-        else if (code === 199) { base = "C"; cedilla() }
-
-        return { base: base, accent: acc }
-    }
-
-
-    // Dessin d'un caractère à l'échelle fontSize (gère les accents)
+    // Dessin d'un caractère à l'échelle fontSize
     function drawChar(x: number, yPage: number, c: string) {
-        const comp = decomposeChar(c)
-        const baseChar = comp.base
-        const accent = comp.accent
-
+        // Cas taille 1 : on garde le chemin optimisé (écrit 2 pages d'un coup)
         if (fontSize === 1) {
-            // chemin optimisé: on écrit 2 pages d'un coup
+            let baseChar = c
+            let addAcute = false
+
+            if (isSmallEAcute(c)) { baseChar = "e"; addAcute = true }
+            else if (isCapitalEAcute(c)) { baseChar = "E"; addAcute = true }
+
             command(SSD1306_SETCOLUMNADRESS)
             command(x)
             command(x + 5)
             command(SSD1306_SETPAGEADRESS)
             command(yPage)
             command(yPage + 1)
-
-            // préparer les 6 colonnes (5 de glyphe + 1 espace)
-            let cols = pins.createBuffer(6)
-            for (let i = 0; i < 6; i++) cols[i] = 0x00
-            let charIndex = baseChar.charCodeAt(0)
-
-            for (let col = 0; col < 5; col++) {
-                cols[col] = font.getNumber(NumberFormat.UInt8BE, 5 * charIndex + col)
-            }
-
-            // ajouter les pixels d'accent
-            for (let k = 0; k < accent.length; k++) {
-                const a = accent[k]
-                if (a.col >= 0 && a.col < 5 && a.row >= 0 && a.row < 8) {
-                    cols[a.col] |= (1 << a.row)
-                }
-            }
-
-            // envoyer
             let line = pins.createBuffer(2)
             line[0] = 0x40
-            for (let i = 0; i < 6; i++) {
-                line[1] = cols[i]
+
+            let charIndex = baseChar.charCodeAt(0)
+            for (let col = 0; col < 6; col++) {
+                if (col === 5) {
+                    line[1] = 0x00
+                } else {
+                    let byte = font.getNumber(NumberFormat.UInt8BE, 5 * charIndex + col)
+                    if (addAcute) {
+                        // petit accent aigu dans le coin haut-droit du caractère (2 pixels diagonaux)
+                        // positions choisies: (col 3,row 0) et (col 4,row 1)
+                        if (col === 3) byte |= 1 << 0
+                        if (col === 4) byte |= 1 << 1
+                    }
+                    line[1] = byte
+                }
                 pins.i2cWriteBuffer(chipAdress, line, false)
             }
             return
         }
 
-        // Taille > 1 : rendu par liste de pixels
+        // Taille > 1 : on reconstruit la liste de pixels à écrire en une fois
         let pixels: Array<Array<number>> = []
+        let baseChar = c
+        let addAcute = false
+
+        if (isSmallEAcute(c)) { baseChar = "e"; addAcute = true }
+        else if (isCapitalEAcute(c)) { baseChar = "E"; addAcute = true }
+
         let baseYpx = yPage * 8 * fontSize
         let charIndex = baseChar.charCodeAt(0)
 
@@ -339,12 +264,16 @@ namespace OLED {
             }
         }
 
-        // accents
-        for (let k = 0; k < accent.length; k++) {
-            const a = accent[k]
-            if (a.col >= 0 && a.col < 5 && a.row >= 0 && a.row < 8) {
-                let px = x + a.col * fontSize
-                let py = baseYpx + a.row * fontSize
+        // accent aigu (2 pixels diagonaux) ajouté au même « batch » pour ne rien effacer
+        if (addAcute) {
+            const acute = [
+                { col: 3, row: 0 },
+                { col: 4, row: 1 }
+            ]
+            for (let k = 0; k < acute.length; k++) {
+                let ac = acute[k]
+                let px = x + ac.col * fontSize
+                let py = baseYpx + ac.row * fontSize
                 for (let dx = 0; dx < fontSize; dx++) {
                     for (let dy = 0; dy < fontSize; dy++) {
                         let xx = px + dx
@@ -358,11 +287,11 @@ namespace OLED {
             }
         }
 
+        // flush
         if (pixels.length) drawShape(pixels)
     }
 
     function drawShape(pixels: Array<Array<number>>) {
-        if (!pixels.length) return
         let x1 = displayWidth
         let y1 = displayHeight * 8
         let x2 = 0
