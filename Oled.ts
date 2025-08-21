@@ -190,10 +190,20 @@ namespace OLED {
         charX = xOffset
     }
 
+    // --- gestion de l'accent aigu pour 'é' / 'É' ---
+    function isSmallEAcute(c: string): boolean { return c === "é" }
+    function isCapitalEAcute(c: string): boolean { return c === "É" }
+
     // Dessin d'un caractère à l'échelle fontSize
     function drawChar(x: number, yPage: number, c: string) {
+        // Cas taille 1 : on garde le chemin optimisé (écrit 2 pages d'un coup)
         if (fontSize === 1) {
-            // Chemin optimisé identique à l'original
+            let baseChar = c
+            let addAcute = false
+
+            if (isSmallEAcute(c)) { baseChar = "e"; addAcute = true }
+            else if (isCapitalEAcute(c)) { baseChar = "E"; addAcute = true }
+
             command(SSD1306_SETCOLUMNADRESS)
             command(x)
             command(x + 5)
@@ -202,29 +212,42 @@ namespace OLED {
             command(yPage + 1)
             let line = pins.createBuffer(2)
             line[0] = 0x40
-            for (let i = 0; i < 6; i++) {
-                if (i === 5) {
+
+            let charIndex = baseChar.charCodeAt(0)
+            for (let col = 0; col < 6; col++) {
+                if (col === 5) {
                     line[1] = 0x00
                 } else {
-                    let charIndex = c.charCodeAt(0)
-                    let charNumber = font.getNumber(NumberFormat.UInt8BE, 5 * charIndex + i)
-                    line[1] = charNumber
+                    let byte = font.getNumber(NumberFormat.UInt8BE, 5 * charIndex + col)
+                    if (addAcute) {
+                        // petit accent aigu dans le coin haut-droit du caractère (2 pixels diagonaux)
+                        // positions choisies: (col 3,row 0) et (col 4,row 1)
+                        if (col === 3) byte |= 1 << 0
+                        if (col === 4) byte |= 1 << 1
+                    }
+                    line[1] = byte
                 }
                 pins.i2cWriteBuffer(chipAdress, line, false)
             }
             return
         }
 
-        // Rendu « pixel par pixel » mis à l'échelle, via drawShape (pas de lecture écran)
+        // Taille > 1 : on reconstruit la liste de pixels à écrire en une fois
         let pixels: Array<Array<number>> = []
-        let baseYpx = yPage * 8 * fontSize
-        let charIndex = c.charCodeAt(0)
+        let baseChar = c
+        let addAcute = false
 
+        if (isSmallEAcute(c)) { baseChar = "e"; addAcute = true }
+        else if (isCapitalEAcute(c)) { baseChar = "E"; addAcute = true }
+
+        let baseYpx = yPage * 8 * fontSize
+        let charIndex = baseChar.charCodeAt(0)
+
+        // corps de la lettre
         for (let col = 0; col < 5; col++) {
             let bits = font.getNumber(NumberFormat.UInt8BE, 5 * charIndex + col)
             for (let row = 0; row < 8; row++) {
                 if ((bits >> row) & 0x01) {
-                    // dessiner un bloc fontSize x fontSize
                     let px = x + col * fontSize
                     let py = baseYpx + row * fontSize
                     for (let dx = 0; dx < fontSize; dx++) {
@@ -233,22 +256,38 @@ namespace OLED {
                             let yy = py + dy
                             if (xx >= 0 && xx < displayWidth && yy >= 0 && yy < displayHeight * 8) {
                                 pixels.push([xx, yy])
-                                // pour limiter la taille du tableau, on flush par paquets
-                                if (pixels.length > 60) {
-                                    drawShape(pixels)
-                                    pixels = []
-                                }
+                                if (pixels.length > 60) { drawShape(pixels); pixels = [] }
                             }
                         }
                     }
                 }
             }
         }
-        // colonne d'espacement (comme la 6e colonne à 0 du mode normal)
-        let spaceStart = x + 5 * fontSize
-        for (let dx = 0; dx < fontSize; dx++) {
-            // rien à pousser car espace = vide
+
+        // accent aigu (2 pixels diagonaux) ajouté au même « batch » pour ne rien effacer
+        if (addAcute) {
+            const acute = [
+                { col: 3, row: 0 },
+                { col: 4, row: 1 }
+            ]
+            for (let k = 0; k < acute.length; k++) {
+                let ac = acute[k]
+                let px = x + ac.col * fontSize
+                let py = baseYpx + ac.row * fontSize
+                for (let dx = 0; dx < fontSize; dx++) {
+                    for (let dy = 0; dy < fontSize; dy++) {
+                        let xx = px + dx
+                        let yy = py + dy
+                        if (xx >= 0 && xx < displayWidth && yy >= 0 && yy < displayHeight * 8) {
+                            pixels.push([xx, yy])
+                            if (pixels.length > 60) { drawShape(pixels); pixels = [] }
+                        }
+                    }
+                }
+            }
         }
+
+        // flush
         if (pixels.length) drawShape(pixels)
     }
 
