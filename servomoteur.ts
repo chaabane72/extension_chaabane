@@ -6,7 +6,7 @@
 namespace Servomoteur {
 
     // ===========================
-    // Sous-catégorie : Servomoteur à rotation continue
+    // Sous-catégorie : moteur à rotation continue
     // ===========================
 
     /**
@@ -71,7 +71,7 @@ namespace Servomoteur {
     }
 
     // ===========================
-    // Sous-catégorie : Servomoteur 180°
+    // Sous-catégorie : moteur 180°
     // ===========================
 
     /**
