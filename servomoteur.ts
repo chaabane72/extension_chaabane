@@ -1,62 +1,62 @@
 /**
  * Blocs personnalisés – Servomoteur continu
  */
-//% color=#2b569b weight=10 icon="\uf013"
-namespace ContinuousServo {
-
+//% color=#2b569b weight=60 icon="\uf013"
+//% groups='["Contrôle simple","Vitesse"]'
+namespace Servomoteur {
     /**
-     * Fait tourner le servomoteur dans un sens à pleine vitesse
+     * Tourne à fond dans un sens
      * @param pin broche du servomoteur
      */
-    //% blockId=spin_one_way weight=100
-    //% block="tourner dans un sens | broche %pin"
-    export function spin_one_way(pin = AnalogPin.P1): void {
+    //% blockId=servo_spin_fw weight=100 group="Contrôle simple"
+    //% block="servomoteur | tourner dans un sens | broche %pin"
+    export function tournerSens(pin: AnalogPin = AnalogPin.P1): void {
         pins.servoWritePin(pin, 180)
     }
 
     /**
-     * Fait tourner le servomoteur dans l'autre sens à pleine vitesse
+     * Tourne à fond dans l'autre sens
      * @param pin broche du servomoteur
      */
-    //% blockId=spin_other_way weight=80
-    //% block="tourner dans l'autre sens | broche %pin"
-    export function spin_other_way(pin = AnalogPin.P2): void {
+    //% blockId=servo_spin_bw weight=90 group="Contrôle simple"
+    //% block="servomoteur | tourner dans l'autre sens | broche %pin"
+    export function tournerAutreSens(pin: AnalogPin = AnalogPin.P1): void {
         pins.servoWritePin(pin, 0)
     }
 
     /**
-     * Fait tourner le servomoteur dans un sens avec une vitesse (0 à 100)
+     * Arrête (position neutre = 90)
      * @param pin broche du servomoteur
-     * @param speed vitesse de 0 à 100
      */
-    //% blockId=spin_one_way_with_speed weight=60
-    //% block="tourner dans un sens | broche %pin | vitesse %speed"
-    //% speed.min=0 speed.max=100
-    export function spin_one_way_with_speed(pin = AnalogPin.P1, speed = 50): void {
-        let spin = (speed * 90) / 100 + 90
-        pins.servoWritePin(pin, spin)
+    //% blockId=servo_stop weight=80 group="Contrôle simple"
+    //% block="servomoteur | arrêter | broche %pin"
+    export function arreter(pin: AnalogPin = AnalogPin.P1): void {
+        pins.servoWritePin(pin, 90)
     }
 
     /**
-     * Fait tourner le servomoteur dans l'autre sens avec une vitesse (0 à 100)
+     * Tourne dans un sens avec vitesse (0 à 100)
      * @param pin broche du servomoteur
-     * @param speed vitesse de 0 à 100
+     * @param vitesse 0 à 100
      */
-    //% blockId=spin_other_way_with_speed weight=40
-    //% block="tourner dans l'autre sens | broche %pin | vitesse %speed"
-    //% speed.min=0 speed.max=100
-    export function spin_other_way_with_speed(pin = AnalogPin.P2, speed = 50): void {
-        let spin = 90 - (speed * 90) / 100
-        pins.servoWritePin(pin, spin)
+    //% blockId=servo_spin_fw_speed weight=70 group="Vitesse"
+    //% block="servomoteur | tourner dans un sens | broche %pin | vitesse %vitesse"
+    //% vitesse.min=0 vitesse.max=100 vitesse.defl=50
+    export function tournerSensVitesse(pin: AnalogPin = AnalogPin.P1, vitesse: number = 50): void {
+        const angle = (vitesse * 90) / 100 + 90
+        pins.servoWritePin(pin, angle)
     }
 
     /**
-     * Arrête le servomoteur sur cette broche
+     * Tourne dans l'autre sens avec vitesse (0 à 100)
      * @param pin broche du servomoteur
+     * @param vitesse 0 à 100
      */
-    //% blockId=turn_off_motor weight=20
-    //% block="arrêter le servomoteur | broche %pin"
-    export function turn_off_motor(pin = DigitalPin.P1): void {
-        pins.digitalWritePin(pin, 0)
+    //% blockId=servo_spin_bw_speed weight=60 group="Vitesse"
+    //% block="servomoteur | tourner dans l'autre sens | broche %pin | vitesse %vitesse"
+    //% vitesse.min=0 vitesse.max=100 vitesse.defl=50
+    export function tournerAutreSensVitesse(pin: AnalogPin = AnalogPin.P1, vitesse: number = 50): void {
+        const angle = 90 - (vitesse * 90) / 100
+        pins.servoWritePin(pin, angle)
     }
 }
