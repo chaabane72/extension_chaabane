@@ -32,13 +32,14 @@ namespace OLED {
     const chipAdress = 0x3C
     const xOffset = 0
     const yOffset = 0
-    let charX = 0
-    let charY = 0
+    let charX = 0               // position X en pixels
+    let charY = 0               // position Y en pages (8 px)
     let displayWidth = 128
-    let displayHeight = 64 / 8
+    let displayHeight = 64 / 8  // en pages
     let screenSize = 0
-    let loadStarted: boolean;
-    let loadPercent: number;
+    let loadStarted: boolean
+    let loadPercent: number
+    let fontSize = 1            // facteur 1, 2, 3
 
     function command(cmd: number) {
         let buf = pins.createBuffer(2)
@@ -60,9 +61,8 @@ namespace OLED {
         command(displayHeight - 1)
         let data = pins.createBuffer(17);
         data[0] = 0x40; // mode données
-        for (let i = 1; i < 17; i++) {
-            data[i] = 0x00
-        }
+        for (let i = 1; i < 17; i++) data[i] = 0x00
+
         // envoi par paquets de 16 octets
         for (let i = 0; i < screenSize; i += 16) {
             pins.i2cWriteBuffer(chipAdress, data, false)
@@ -145,11 +145,11 @@ namespace OLED {
     //% weight=6
     export function writeString(str: string) {
         for (let i = 0; i < str.length; i++) {
-            if (charX > displayWidth - 6) {
+            if (charX > displayWidth - 6 * fontSize) {
                 newLine()
             }
             drawChar(charX, charY, str.charAt(i))
-            charX += 6
+            charX += 6 * fontSize
         }
     }
 
@@ -177,36 +177,79 @@ namespace OLED {
     //% block="aller à la ligne"
     //% weight=4
     export function newLine() {
-        charY++
+        // chaque ligne texte fait fontSize pages (8 * fontSize pixels)
+        charY += fontSize
         charX = xOffset
     }
 
     //% block="curseur aller à la ligne $n"
     //% weight=3
     export function moveToLine(n: number) {
+        // n est exprimé en pages (comme avant)
         charY = n
         charX = xOffset
     }
 
-    function drawChar(x: number, y: number, c: string) {
-        command(SSD1306_SETCOLUMNADRESS)
-        command(x)
-        command(x + 5)
-        command(SSD1306_SETPAGEADRESS)
-        command(y)
-        command(y + 1)
-        let line = pins.createBuffer(2)
-        line[0] = 0x40
-        for (let i = 0; i < 6; i++) {
-            if (i === 5) {
-                line[1] = 0x00
-            } else {
-                let charIndex = c.charCodeAt(0)
-                let charNumber = font.getNumber(NumberFormat.UInt8BE, 5 * charIndex + i)
-                line[1] = charNumber
+    // Dessin d'un caractère à l'échelle fontSize
+    function drawChar(x: number, yPage: number, c: string) {
+        if (fontSize === 1) {
+            // Chemin optimisé identique à l'original
+            command(SSD1306_SETCOLUMNADRESS)
+            command(x)
+            command(x + 5)
+            command(SSD1306_SETPAGEADRESS)
+            command(yPage)
+            command(yPage + 1)
+            let line = pins.createBuffer(2)
+            line[0] = 0x40
+            for (let i = 0; i < 6; i++) {
+                if (i === 5) {
+                    line[1] = 0x00
+                } else {
+                    let charIndex = c.charCodeAt(0)
+                    let charNumber = font.getNumber(NumberFormat.UInt8BE, 5 * charIndex + i)
+                    line[1] = charNumber
+                }
+                pins.i2cWriteBuffer(chipAdress, line, false)
             }
-            pins.i2cWriteBuffer(chipAdress, line, false)
+            return
         }
+
+        // Rendu « pixel par pixel » mis à l'échelle, via drawShape (pas de lecture écran)
+        let pixels: Array<Array<number>> = []
+        let baseYpx = yPage * 8 * fontSize
+        let charIndex = c.charCodeAt(0)
+
+        for (let col = 0; col < 5; col++) {
+            let bits = font.getNumber(NumberFormat.UInt8BE, 5 * charIndex + col)
+            for (let row = 0; row < 8; row++) {
+                if ((bits >> row) & 0x01) {
+                    // dessiner un bloc fontSize x fontSize
+                    let px = x + col * fontSize
+                    let py = baseYpx + row * fontSize
+                    for (let dx = 0; dx < fontSize; dx++) {
+                        for (let dy = 0; dy < fontSize; dy++) {
+                            let xx = px + dx
+                            let yy = py + dy
+                            if (xx >= 0 && xx < displayWidth && yy >= 0 && yy < displayHeight * 8) {
+                                pixels.push([xx, yy])
+                                // pour limiter la taille du tableau, on flush par paquets
+                                if (pixels.length > 60) {
+                                    drawShape(pixels)
+                                    pixels = []
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // colonne d'espacement (comme la 6e colonne à 0 du mode normal)
+        let spaceStart = x + 5 * fontSize
+        for (let dx = 0; dx < fontSize; dx++) {
+            // rien à pousser car espace = vide
+        }
+        if (pixels.length) drawShape(pixels)
     }
 
     function drawShape(pixels: Array<Array<number>>) {
@@ -255,7 +298,7 @@ namespace OLED {
     //% weight=1
     export function drawLine(x0: number, y0: number, x1: number, y1: number) {
         let pixels: Array<Array<number>> = []
-        let kx: number, ky: number, c: number, i: number, dx: number, dy: number
+        let kx: number, ky: number, c: number, i: number
         let targetX = x1
         let targetY = y1
         x1 -= x0; kx = 0; if (x1 > 0) kx = +1; if (x1 < 0) { kx = -1; x1 = -x1; } x1++
@@ -301,11 +344,12 @@ namespace OLED {
         drawLine(x1, y0, x1, y1)
     }
 
-    //% block="initialiser OLED largeur $width hauteur $height"
+    //% block="initialiser OLED largeur $width hauteur $height police $taillePolice"
     //% width.defl=128
     //% height.defl=64
+    //% taillePolice.defl=1 taillePolice.min=1 taillePolice.max=3
     //% weight=9
-    export function init(width: number, height: number) {
+    export function init(width: number, height: number, taillePolice: number) {
         command(SSD1306_DISPLAYOFF);
         command(SSD1306_SETDISPLAYCLOCKDIV);
         command(0x80);                                  // ratio recommandé 0x80
@@ -331,11 +375,14 @@ namespace OLED {
         command(SSD1306_DISPLAYALLON_RESUME);
         command(SSD1306_NORMALDISPLAY);
         command(SSD1306_DISPLAYON);
+
         displayWidth = width
         displayHeight = height / 8
         screenSize = displayWidth * displayHeight
+        fontSize = Math.max(1, Math.min(3, Math.floor(taillePolice)))
         charX = xOffset
         charY = yOffset
+
         font = hex`
     0000000000
     3E5B4F5B3E
